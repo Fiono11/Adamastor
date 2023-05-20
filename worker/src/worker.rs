@@ -312,10 +312,10 @@ impl MessageHandler for WorkerReceiverHandler {
                         x = sk;
                     }
                 }
-                for tx in block.txs {
-                    Verify(&tx.signature, "msg", &R).unwrap();
-                    check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
-                }
+                //for tx in block.txs {
+                    //Verify(&tx.signature, "msg", &R).unwrap();
+                    //check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
+                //}
 
                 self
                     .tx_processor
