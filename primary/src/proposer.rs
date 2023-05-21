@@ -6,8 +6,8 @@ use mc_crypto_keys::SignatureService;
 use mc_account_keys::PublicAddress as PublicKey;
 use mc_crypto_keys::tx_hash::TxHash as Digest;
 
-//#[cfg(feature = "benchmark")]
-//use log::info;
+#[cfg(feature = "benchmark")]
+use log::info;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::time::{sleep, Duration, Instant};
 

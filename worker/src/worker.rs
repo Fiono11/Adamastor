@@ -7,21 +7,23 @@ use crate::quorum_waiter::QuorumWaiter;
 use crate::synchronizer::Synchronizer;
 use async_trait::async_trait;
 
+use bulletproofs_og::{RangeProof, PedersenGens};
 use bytes::Bytes;
 
 
+use chacha20poly1305::aead::OsRng;
 use config::{Committee, Parameters, WorkerId, PK};
 
 
 use curve25519_dalek::traits::Identity;
 use mc_account_keys::{PublicAddress as PublicKey};
-use mc_crypto_keys::{ReprBytes};
 use mc_crypto_keys::tx_hash::TxHash as Digest;
 use futures::sink::SinkExt as _;
 use log::{error, info, warn};
 
-use mc_crypto_ring_signature::{KeyGen, RistrettoPoint, Scalar};
+use mc_crypto_ring_signature::{KeyGen, RistrettoPoint, Scalar, Verify};
 
+use mc_transaction_core::range_proofs::check_range_proof;
 use mc_transaction_types::constants::RING_SIZE;
 use network::{MessageHandler, Receiver, Writer};
 use primary::PrimaryWorkerMessage;
@@ -34,7 +36,7 @@ use tokio::sync::mpsc::{channel, Sender};
 use mc_transaction_core::tx::{Transaction};
 
 /// The default channel capacity for each channel of the worker.
-pub const CHANNEL_CAPACITY: usize = 100_0000;
+pub const CHANNEL_CAPACITY: usize = 1_000_000;
 
 /// The primary round number.
 // TODO: Move to the primary.
@@ -212,6 +214,20 @@ impl Worker {
         let (tx_helper, rx_helper) = channel(CHANNEL_CAPACITY);
         let (tx_processor, rx_processor) = channel(CHANNEL_CAPACITY);
 
+        let mut R: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
+        let mut x: Scalar = Scalar::one();
+
+        for i in 0..RING_SIZE {
+            let (sk, pk) = KeyGen();
+            R[i] = pk;
+
+            if i == 0 {
+                x = sk;
+            }
+        }
+
+        let gens = PedersenGens::default();
+
         // Receive incoming messages from other workers.
         let mut address = self
             .committee
@@ -226,6 +242,8 @@ impl Worker {
                 tx_helper,
                 tx_processor,
                 nodes,
+                R,
+                gens,
             },
         );
 
@@ -293,6 +311,8 @@ struct WorkerReceiverHandler {
     tx_helper: Sender<(Vec<Digest>, PublicKey)>,
     tx_processor: Sender<SerializedBatchMessage>,
     nodes: u64,
+    R: Vec<RistrettoPoint>,
+    gens: PedersenGens,
 }
 
 #[async_trait]
@@ -304,22 +324,10 @@ impl MessageHandler for WorkerReceiverHandler {
         // Deserialize and parse the message.
         match bincode::deserialize(&serialized) {
             Ok(WorkerMessage::Batch(block)) => { 
-                let mut R: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
-                let mut x: Scalar = Scalar::one();
-
-                for i in 0..RING_SIZE {
-                    let (sk, pk) = KeyGen();
-                    R[i] = pk;
-
-                    if i == 0 {
-                        x = sk;
-                    }
-                }
-                for _tx in block.txs {
-                    //RingMLSAG::verify(&tx.signature, message, ring, output_commitment).unwrap();
-                    //Verify(&tx.signature, "msg", &R).unwrap();
-                    sleep(Duration::from_millis(40 / self.nodes));
-                    //check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
+                for tx in block.txs {
+                    Verify(&tx.signature, "msg", &self.R).unwrap();
+                    //sleep(Duration::from_millis(40));
+                    check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &self.gens, &mut OsRng).unwrap();
                 }
 
                 self

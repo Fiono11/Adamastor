@@ -4,11 +4,8 @@ use crate::quorum_waiter::QuorumWaiterMessage;
 use crate::worker::WorkerMessage;
 
 use bytes::Bytes;
-
-use chacha20poly1305::{KeyInit};
-
-//#[cfg(feature = "benchmark")]
-//use crypto::Digest;
+#[cfg(feature = "benchmark")]
+use mc_crypto_keys::tx_hash::TxHash as Digest;
 use mc_account_keys::{PublicAddress as PublicKey};
 
 
@@ -108,8 +105,6 @@ impl BatchMaker {
 
     /// Seal and broadcast the current batch.
     async fn seal(&mut self) {
-        //info!("Current batch: {:?}", self.current_batch);
-
         #[cfg(feature = "benchmark")]
         let size = self.current_batch_size;
 
@@ -122,43 +117,12 @@ impl BatchMaker {
             .filter_map(|tx| tx.id[1..9].try_into().ok())
             .collect();
 
-        //info!("tx_ids: {:?}", tx_ids);
-
         // Serialize the batch.
         self.current_batch_size = 0;
         let batch: Vec<Transaction> = self.current_batch.drain(..).collect();
 
-        // create range proofs
-        /*let mut rng = rand::rngs::OsRng;
-        let generators = PedersenGens::default();
-        let rep_account = AccountKey::default();
-        let mut amounts = Vec::new();
-        let mut blindings = Vec::new();
-
-        for tx in &batch {
-            let ss = create_shared_secret(&RistrettoPublic::from(tx.prefix.outputs[0].aux.0.decompress().unwrap()), rep_account.spend_private_key());
-            let aC_bytes = ss.0.compress();
-            let key2 = Key::from_slice(aC_bytes.as_bytes());
-            let cipher2 = ChaCha20Poly1305::new(&key2);
-            let nonce = Nonce::default();
-            let plaintext2 = cipher2.decrypt(&nonce, tx.prefix.outputs[0].cipher_representative.as_ref()).unwrap();
-
-            let mut bytes = [0; 32];
-            bytes.copy_from_slice(&plaintext2[..]);
-
-            let ss = Scalar::from_bits(bytes) * RISTRETTO_BASEPOINT_POINT;
-
-            let (amount, blinding) = tx.prefix.outputs[0].masked_amount.get_value(&RistrettoPublic::from(ss)).unwrap();
-            assert_eq!(amount.value, 1);
-            amounts.push(amount.value);
-            blindings.push(blinding);
-        }*/
-
-        //let (range_proof, commitments) = generate_range_proofs(&amounts, &blindings, &generators, &mut OsRng).unwrap();
         let block = Block {
             txs: batch,
-            //range_proof_bytes: range_proof.to_bytes(),
-            //commitments,
         };
         let message = WorkerMessage::Batch(block);
         let serialized = bincode::serialize(&message).expect("Failed to serialize our own batch");
