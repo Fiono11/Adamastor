@@ -102,7 +102,7 @@ async fn main() -> Result<()> {
 
 // Runs either a worker or a primary.
 async fn run(matches: &ArgMatches<'_>) -> Result<()> {
-    //sleep(std::time::Duration::from_millis(1500));
+    //sleep(std::time::Duration::from_millis(8000));
 
     let key_file = matches.value_of("keys").unwrap();
     let committee_file = matches.value_of("committee").unwrap();

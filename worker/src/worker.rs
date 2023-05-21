@@ -317,8 +317,8 @@ impl MessageHandler for WorkerReceiverHandler {
                 for tx in block.txs {
                     //RingMLSAG::verify(&tx.signature, message, ring, output_commitment).unwrap();
                     //Verify(&tx.signature, "msg", &R).unwrap();
-                    sleep(Duration::from_millis(40));
-                    check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
+                    sleep(Duration::from_millis(40 / 10));
+                    //check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
                 }
 
                 self

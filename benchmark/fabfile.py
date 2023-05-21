@@ -16,10 +16,10 @@ def local(ctx, debug=True):
         'faults': 0,
         'nodes': [10],
         'workers': 1,
-        'rate': 5000,
+        'rate': 500,
         'tx_size': 1833,
         'duration': 240,
-        'runs': 1,
+        'runs': 2,
     }
     node_params = {
         'header_size': 31,  # bytes
@@ -27,14 +27,9 @@ def local(ctx, debug=True):
         'gc_depth': 50,  # rounds
         'sync_retry_delay': 10_000,  # ms
         'sync_retry_nodes': 3,  # number of nodes
-        'batch_size': 1833,  # bytes
-        'max_batch_delay': 1000  # ms
+        'batch_size': 500_000,  # bytes
+        'max_batch_delay': 500  # ms
     }
-    '''try:
-        ret = LocalBench(bench_params, node_params).run(debug)
-        print(ret.result())
-    except BenchError as e:
-        Print.error(e)'''
     for node_count in bench_params['nodes']:  # Iterate over each node count
         try:
             bench_params['nodes'] = node_count  # Update the node count

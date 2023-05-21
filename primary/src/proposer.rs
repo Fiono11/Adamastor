@@ -122,7 +122,7 @@ impl Proposer {
             let timer_expired = timer.is_elapsed();
             //info!("Digests: {:?}", self.digests);
 
-            if enough_digests && enough_parents {
+            if (timer_expired || enough_digests) && enough_parents {
                 // Make a new header.
                 self.make_header().await;
                 self.payload_size = 0;

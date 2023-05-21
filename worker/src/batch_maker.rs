@@ -97,12 +97,12 @@ impl BatchMaker {
                 },
 
                 // If the timer triggers, seal the batch even if it contains few transactions.
-                /*() = &mut timer => {
+                () = &mut timer => {
                     if !self.current_batch.is_empty() {
                         self.seal().await;
                     }
                     timer.as_mut().reset(Instant::now() + Duration::from_millis(self.max_batch_delay));
-                }*/
+                }
             }
 
             // Give the change to schedule other tasks.
