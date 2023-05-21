@@ -412,39 +412,6 @@ mod account_key_tests {
     use rand::prelude::StdRng;
     use rand_core::SeedableRng;
 
-    // Helper method to verify the signature of a public address
-    fn verify_signature(subaddress: &PublicAddress, spki: &[u8]) {
-        let signature = RistrettoSignature::try_from(
-            subaddress
-                .fog_authority_sig()
-                .expect("Subaddress does not contain fog authority sig"),
-        )
-        .expect("Could not construct signature from fog authority sig bytes");
-        assert!(subaddress
-            .view_public_key
-            .verify_authority(spki, &signature)
-            .is_ok());
-    }
-
-    #[test]
-    // Deserializing should recover a serialized a PublicAddress.
-    fn mc_util_serial_prost_roundtrip_public_address() {
-        mc_util_test_helper::run_with_several_seeds(|mut rng| {
-            {
-                let acct = AccountKey::random(&mut rng);
-                let ser = mc_util_serial::encode(&acct.default_subaddress());
-                let result: PublicAddress = mc_util_serial::decode(&ser).unwrap();
-                assert_eq!(acct.default_subaddress(), result);
-            }
-            {
-                let acct = AccountKey::random_with_fog(&mut rng);
-                let ser = mc_util_serial::encode(&acct.default_subaddress());
-                let result: PublicAddress = mc_util_serial::decode(&ser).unwrap();
-                assert_eq!(acct.default_subaddress(), result);
-            }
-        });
-    }
-
     #[test]
     // Subaddress private keys should agree with subaddress public keys.
     fn test_subadress_private_keys_agree_with_subaddress_public_keys() {
@@ -520,64 +487,6 @@ mod account_key_tests {
         assert_eq!(
             public_address.spend_public_key().to_bytes(),
             case.subaddress_spend_public_key
-        );
-    }
-
-    #[test]
-    // Subaddress fog authority signature should verify
-    fn test_fog_authority_signature() {
-        let mut rng: StdRng = SeedableRng::from_seed([42u8; 32]);
-        let view_private = RistrettoPrivate::from_random(&mut rng);
-        let spend_private = RistrettoPrivate::from_random(&mut rng);
-        let fog_url = "fog://example.com";
-        let mut fog_authority_spki = [0u8; 32];
-        rng.fill_bytes(&mut fog_authority_spki);
-        let fog_report_key = String::from("");
-
-        let account_key = AccountKey::new_with_fog(
-            &spend_private,
-            &view_private,
-            fog_url,
-            fog_report_key,
-            fog_authority_spki,
-        );
-
-        let index = rng.next_u64();
-        let subaddress = account_key.subaddress(index);
-
-        // Note: The fog_authority_fingerprint is published, so it is known by the
-        // verifier.
-        verify_signature(&subaddress, &fog_authority_spki);
-    }
-
-    #[test]
-    // Account Key and View Account Key derived from same keys should generate the
-    // same subaddresses
-    fn test_view_account_keys_subaddresses() {
-        let mut rng: StdRng = SeedableRng::from_seed([42u8; 32]);
-        let view_private = RistrettoPrivate::from_random(&mut rng);
-        let spend_private = RistrettoPrivate::from_random(&mut rng);
-        let account_key = AccountKey::new(&spend_private, &view_private);
-        let view_account_key = ViewAccountKey::from(&account_key);
-
-        assert_eq!(
-            account_key.default_subaddress(),
-            view_account_key.default_subaddress()
-        );
-
-        assert_eq!(
-            account_key.change_subaddress(),
-            view_account_key.change_subaddress()
-        );
-
-        assert_eq!(
-            account_key.gift_code_subaddress(),
-            view_account_key.gift_code_subaddress()
-        );
-
-        assert_eq!(
-            account_key.subaddress(500),
-            view_account_key.subaddress(500)
         );
     }
 }

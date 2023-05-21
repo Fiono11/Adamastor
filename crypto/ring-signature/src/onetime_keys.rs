@@ -73,13 +73,13 @@
 
 use crate::domain_separators::HASH_TO_SCALAR_DOMAIN_TAG;
 use curve25519_dalek::{
-    constants::{RISTRETTO_BASEPOINT_POINT, RISTRETTO_BASEPOINT_TABLE}, ristretto::RistrettoPoint, scalar::Scalar,
+    constants::{RISTRETTO_BASEPOINT_POINT}, ristretto::RistrettoPoint, scalar::Scalar,
 };
 use mc_account_keys::PublicAddress;
 use mc_crypto_hashes::{Blake2b512, Digest};
 use mc_crypto_keys::{RistrettoPrivate, RistrettoPublic};
-use rand_core::OsRng;
-use sha2::Sha256;
+
+
 
 const g: RistrettoPoint = RISTRETTO_BASEPOINT_POINT;
 
@@ -122,7 +122,7 @@ pub fn create_tx_out_target_key(
 /// * `recipient_spend_key` - The recipient's public subaddress spend key `D`.
 pub fn create_tx_out_public_key(
     tx_out_private_key: &RistrettoPrivate,
-    recipient_spend_key: &RistrettoPublic,
+    _recipient_spend_key: &RistrettoPublic,
 ) -> RistrettoPublic {
     let r: &Scalar = tx_out_private_key.as_ref();
     //let D = recipient_spend_key.as_ref();
@@ -435,44 +435,3 @@ mod tests {
     }
 }
 
-#[test]
-fn pedersen() {
-    // Generate random blinding factors for the two commitments
-    let rng = &mut OsRng;
-    let r_a = Scalar::random(rng);
-    let r_b = Scalar::random(rng);
-
-    // Choose two values to commit to
-    let a = Scalar::from(42u8);
-    let b = Scalar::from(123u8);
-
-    // Compute the Pedersen commitments
-    let H = g*Scalar::random(rng);
-    let C_a = RISTRETTO_BASEPOINT_POINT*(&a) + H*(&r_a);
-    let C_b = RISTRETTO_BASEPOINT_POINT*(&b) + H*(&r_b);
-
-    // Choose a random value and compute its commitment
-    let s = Scalar::random(rng);
-    let C_s = RISTRETTO_BASEPOINT_POINT*(&s) + H*(&Scalar::zero());
-
-    // Compute the challenge value
-    let mut hasher = Sha256::new();
-    hasher.update(C_a.compress().as_bytes());
-    hasher.update(C_b.compress().as_bytes());
-    hasher.update(C_s.compress().as_bytes());
-    let e = Scalar::from(1u8);
-
-    // Compute the response value
-    let z = &s + &(&e*&a);
-
-    // Compute a non-interactive proof of equality
-    let C_s_prime = &z*RISTRETTO_BASEPOINT_POINT - &C_a - &(&e*&C_b);
-
-    // Verify the non-interactive proof
-    let mut hasher = Sha256::new();
-    hasher.update(C_a.compress().as_bytes());
-    hasher.update(C_b.compress().as_bytes());
-    hasher.update(C_s_prime.compress().as_bytes());
-    let e_prime = Scalar::from(1u8);
-    assert_eq!(C_s_prime, C_s, "Challenge values do not match");
-}

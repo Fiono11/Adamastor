@@ -440,7 +440,7 @@ impl SignatureService {
     pub fn new(secret: RistrettoPrivate) -> Self {
         let (tx, mut rx): (Sender<(TxHash, oneshot::Sender<_>)>, _) = channel(100);
         tokio::spawn(async move {
-            while let Some((digest, sender)) = rx.recv().await {
+            while let Some((_digest, sender)) = rx.recv().await {
                 //let signature = pair.sign(&digest[..]);
                 let signature = secret.sign_schnorrkel(b"context", b"message");
                 let _ = sender.send(signature);

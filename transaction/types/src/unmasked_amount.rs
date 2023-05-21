@@ -1,7 +1,7 @@
 // Copyright (c) 2018-2022 The MobileCoin Foundation
 
 //! Unmasked amount types
-use crate::{amount::Amount, TokenId};
+use crate::{amount::Amount};
 use mc_crypto_digestible::Digestible;
 use mc_crypto_ring_signature::CurveScalar;
 

@@ -5,7 +5,7 @@
 
 pub use error::AmountError;
 
-use crate::TokenId;
+
 use mc_crypto_digestible::Digestible;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

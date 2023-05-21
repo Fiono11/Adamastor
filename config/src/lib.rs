@@ -1,8 +1,8 @@
-use ed25519_dalek::{SecretKey, PublicKey};
+
 // Copyright(C) Facebook, Inc. and its affiliates.
 use log::info;
-use mc_crypto_keys::{RistrettoPrivate, Ed25519Public as PublicAddress, Ed25519Private as AccountKey, Ed25519Pair};
-use rand_core::OsRng;
+use mc_crypto_keys::{Ed25519Pair};
+
 use serde::de::{DeserializeOwned, self};
 use serde::{Deserialize, Serialize, ser};
 use std::convert::TryInto;
@@ -13,7 +13,7 @@ use std::io::BufWriter;
 use std::io::Write as _;
 use std::net::SocketAddr;
 use thiserror::Error;
-use mc_util_from_random::FromRandom;
+
 
 #[derive(Error, Debug)]
 pub enum ConfigError {

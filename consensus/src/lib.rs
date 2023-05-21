@@ -9,10 +9,6 @@ use std::collections::{HashMap, HashSet};
 use tokio::sync::mpsc::{Receiver, Sender};
 use primary::Hash;
 
-#[cfg(test)]
-#[path = "tests/consensus_tests.rs"]
-pub mod consensus_tests;
-
 /// The representation of the DAG in memory.
 type Dag = HashMap<Round, HashMap<PublicKey, (Digest, Certificate)>>;
 

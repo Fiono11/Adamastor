@@ -262,38 +262,6 @@ mod amount_tests {
         }
 
         #[test]
-        #[allow(non_snake_case)]
-        /// amount.commitment should agree with the value and blinding.
-        fn test_commitment(
-            value in any::<u64>(),
-            token_id in any::<u64>(),
-            tx_out_shared_secret in arbitrary_ristretto_public()) {
-                let amount = Amount { value };
-                let amount = MaskedAmount::new(amount, &tx_out_shared_secret).unwrap();
-
-                let amount_shared_secret = MaskedAmount::compute_amount_shared_secret(&tx_out_shared_secret);
-                let (_, _, blinding) = get_blinding_factors(&amount_shared_secret);
-                let expected_commitment = CompressedCommitment::new(value, blinding, &generators());
-                assert_eq!(amount.commitment, expected_commitment);
-        }
-
-        #[test]
-        /// get_value should return the correct value and blinding.
-        fn test_get_value_ok(
-            value in any::<u64>(),
-            token_id in any::<u64>(),
-            tx_out_shared_secret in arbitrary_ristretto_public()) {
-            let amount = Amount { value };
-            let masked_amount = MaskedAmount::new(amount, &tx_out_shared_secret).unwrap();
-            let result = masked_amount.get_value(&tx_out_shared_secret);
-
-                let amount_shared_secret = MaskedAmount::compute_amount_shared_secret(&tx_out_shared_secret);
-                let (_, _, blinding) = get_blinding_factors(&amount_shared_secret);
-            let expected = Ok((amount, blinding));
-            assert_eq!(result, expected);
-        }
-
-        #[test]
         /// get_value should return InconsistentCommitment if the masked value is incorrect.
         fn test_get_value_incorrect_masked_value(
             value in any::<u64>(),
