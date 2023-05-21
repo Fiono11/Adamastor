@@ -65,6 +65,7 @@ pub struct Worker {
     parameters: Parameters,
     /// The persistent storage.
     store: Store,
+    nodes: u64,
 }
 
 impl Worker {
@@ -74,6 +75,7 @@ impl Worker {
         committee: Committee,
         parameters: Parameters,
         store: Store,
+        nodes: u64,
     ) {
         // Define a worker instance.
         let worker = Self {
@@ -82,13 +84,14 @@ impl Worker {
             committee,
             parameters,
             store,
+            nodes,
         };
 
         // Spawn all worker tasks.
         let (tx_primary, rx_primary) = channel(CHANNEL_CAPACITY);
         worker.handle_primary_messages();
         worker.handle_clients_transactions(tx_primary.clone());
-        worker.handle_workers_messages(tx_primary);
+        worker.handle_workers_messages(tx_primary, worker.nodes);
 
         // The `PrimaryConnector` allows the worker to send messages to its primary.
         PrimaryConnector::spawn(
@@ -209,7 +212,7 @@ impl Worker {
     }
 
     /// Spawn all tasks responsible to handle messages from other workers.
-    fn handle_workers_messages(&self, tx_primary: Sender<SerializedBatchDigestMessage>) {
+    fn handle_workers_messages(&self, tx_primary: Sender<SerializedBatchDigestMessage>, nodes: u64) {
         let (tx_helper, rx_helper) = channel(CHANNEL_CAPACITY);
         let (tx_processor, rx_processor) = channel(CHANNEL_CAPACITY);
 
@@ -226,6 +229,7 @@ impl Worker {
             WorkerReceiverHandler {
                 tx_helper,
                 tx_processor,
+                nodes,
             },
         );
 
@@ -292,6 +296,7 @@ impl MessageHandler for TxReceiverHandler {
 struct WorkerReceiverHandler {
     tx_helper: Sender<(Vec<Digest>, PublicKey)>,
     tx_processor: Sender<SerializedBatchMessage>,
+    nodes: u64,
 }
 
 #[async_trait]
@@ -317,7 +322,7 @@ impl MessageHandler for WorkerReceiverHandler {
                 for tx in block.txs {
                     //RingMLSAG::verify(&tx.signature, message, ring, output_commitment).unwrap();
                     //Verify(&tx.signature, "msg", &R).unwrap();
-                    sleep(Duration::from_millis(40 / 10));
+                    sleep(Duration::from_millis(40 / self.nodes));
                     //check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
                 }
 

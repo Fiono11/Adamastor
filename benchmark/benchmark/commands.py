@@ -26,24 +26,26 @@ class CommandMaker:
         return f'./node generate_keys --filename {filename}'
 
     @staticmethod
-    def run_primary(keys, committee, store, parameters, debug=False):
+    def run_primary(keys, committee, store, parameters, nodes, debug=False):
         assert isinstance(keys, str)
         assert isinstance(committee, str)
         assert isinstance(parameters, str)
         assert isinstance(debug, bool)
+        assert isinstance(nodes, str)
         v = '-vvv' if debug else '-vv'
         return (f'./node {v} run --keys {keys} --committee {committee} '
-                f'--store {store} --parameters {parameters} primary')
+                f'--store {store} --parameters {parameters} --nodes {nodes} primary')
 
     @staticmethod
-    def run_worker(keys, committee, store, parameters, id, debug=False):
+    def run_worker(keys, committee, store, parameters, nodes, id, debug=False):
         assert isinstance(keys, str)
         assert isinstance(committee, str)
         assert isinstance(parameters, str)
         assert isinstance(debug, bool)
+        assert isinstance(nodes, str)
         v = '-vvv' if debug else '-vv'
         return (f'./node {v} run --keys {keys} --committee {committee} '
-                f'--store {store} --parameters {parameters} worker --id {id}')
+                f'--store {store} --parameters {parameters} --nodes {nodes} worker --id {id}')
 
     @staticmethod
     def run_client(address, size, rate, nodes):
