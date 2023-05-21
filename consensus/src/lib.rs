@@ -2,7 +2,7 @@
 use config::{Committee, Stake, PK};
 use mc_account_keys::PublicAddress as PublicKey;
 use mc_crypto_keys::tx_hash::TxHash as Digest;
-use log::{debug, info, log_enabled, warn};
+use log::{info, log_enabled, warn};
 use primary::{Certificate, Round};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
@@ -167,7 +167,7 @@ impl Consensus {
 
             // Log the latest committed round of every authority (for debug).
             if log_enabled!(log::Level::Debug) {
-                for (name, round) in &state.last_committed {
+                for (_name, _round) in &state.last_committed {
                     //debug!("Latest commit of {}: Round {}", name, round);
                 }
             }

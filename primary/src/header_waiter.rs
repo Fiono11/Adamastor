@@ -7,7 +7,7 @@ use config::{Committee, WorkerId, PK};
 use futures::future::try_join_all;
 use futures::stream::futures_unordered::FuturesUnordered;
 use futures::stream::StreamExt as _;
-use log::{debug, error};
+use log::{error};
 use mc_account_keys::PublicAddress;
 use mc_crypto_keys::tx_hash::TxHash;
 use network::SimpleSender;

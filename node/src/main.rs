@@ -1,4 +1,4 @@
-use std::thread::sleep;
+
 
 // Copyright(C) Facebook, Inc. and its affiliates.
 use anyhow::{Context, Result};
@@ -13,10 +13,10 @@ use curve25519_dalek::scalar::Scalar;
 use env_logger::Env;
 use mc_account_keys::AccountKey;
 use mc_account_keys::PublicAddress;
-use mc_crypto_keys::Ed25519Pair;
+
 use mc_crypto_keys::RistrettoPrivate;
 use mc_crypto_keys::RistrettoPublic;
-use mc_util_from_random::FromRandom;
+
 use primary::{Certificate, Primary};
 use rand_core::OsRng;
 use store::Store;

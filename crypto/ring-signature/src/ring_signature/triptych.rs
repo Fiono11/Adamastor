@@ -425,7 +425,7 @@ pub fn Link(sgn_a: &TriptychSignature, sgn_b: &TriptychSignature) -> bool {
 
 #[cfg(test)]
 mod triptych_test {
-	use std::time::{SystemTime, Instant, Duration};
+	use std::time::{Instant, Duration};
 
 use alloc::vec;
 	use alloc::vec::Vec;
@@ -433,7 +433,7 @@ use alloc::vec;
 	use curve25519_dalek::ristretto::RistrettoPoint;
 	use curve25519_dalek::scalar::Scalar;
 	use curve25519_dalek::traits::Identity;
-	use crate::ring_signature::{triptych, util};
+	use crate::ring_signature::{triptych};
 
 	#[test]
 	pub fn test_base_signature() {

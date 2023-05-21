@@ -8,7 +8,7 @@ use mc_crypto_keys::{RistrettoSignature, SignatureService};
 use mc_crypto_keys::tx_hash::TxHash;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::convert::{TryInto, TryFrom};
+use std::convert::{TryInto};
 use std::fmt;
 
 /// This trait is implemented by all messages that can be hashed.

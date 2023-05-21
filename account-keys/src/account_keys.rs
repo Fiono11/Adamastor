@@ -17,11 +17,11 @@ use core::{
     fmt,
     hash::{Hash, Hasher},
 };
-use alloc::string::String;
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, constants::RISTRETTO_BASEPOINT_POINT};
+
+use curve25519_dalek::{constants::RISTRETTO_BASEPOINT_POINT};
 use mc_core::{
     keys::{
-        RootSpendPrivate, RootSpendPublic, RootViewPrivate, SubaddressSpendPublic,
+        RootSpendPrivate, RootViewPrivate, SubaddressSpendPublic,
         SubaddressViewPublic,
     },
     slip10::Slip10Key,
@@ -33,7 +33,7 @@ use mc_util_from_random::FromRandom;
 #[cfg(feature = "prost")]
 use prost::Message;
 use rand_core::{CryptoRng, RngCore};
-use serde::{Deserialize, Serialize, ser, de};
+use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
 
 pub use mc_core::{
@@ -403,7 +403,7 @@ impl AccountKey {
 #[cfg(test)]
 mod account_key_tests {
     use super::*;
-    use mc_crypto_keys::RistrettoSignature;
+    
     use mc_test_vectors_account_keys::{
         DefaultSubaddrKeysFromAcctPrivKeys, SubaddrKeysFromAcctPrivKeys,
     };

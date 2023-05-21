@@ -11,7 +11,7 @@ use crate::proposer::Proposer;
 use crate::synchronizer::Synchronizer;
 use async_trait::async_trait;
 use bytes::Bytes;
-use config::{Committee, Parameters, WorkerId, PK, KeyPair, SK};
+use config::{Committee, Parameters, WorkerId, PK, SK};
 use curve25519_dalek::scalar::Scalar;
 use futures::sink::SinkExt as _;
 use log::info;

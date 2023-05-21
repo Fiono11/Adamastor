@@ -5,7 +5,7 @@ use config::{Committee, WorkerId};
 use mc_crypto_keys::SignatureService;
 use mc_account_keys::PublicAddress as PublicKey;
 use mc_crypto_keys::tx_hash::TxHash as Digest;
-use log::{debug, info};
+
 //#[cfg(feature = "benchmark")]
 //use log::info;
 use tokio::sync::mpsc::{Receiver, Sender};

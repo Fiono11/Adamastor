@@ -3,7 +3,7 @@ use crate::primary::PrimaryMessage;
 use bytes::Bytes;
 use config::{Committee, PK};
 use log::{error, warn};
-use mc_account_keys::PublicAddress;
+
 use mc_crypto_keys::tx_hash::TxHash;
 use network::SimpleSender;
 use store::Store;
