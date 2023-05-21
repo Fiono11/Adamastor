@@ -20,13 +20,15 @@ use mc_crypto_keys::tx_hash::TxHash as Digest;
 use futures::sink::SinkExt as _;
 use log::{error, info, warn, debug};
 use mc_crypto_ring_signature::onetime_keys::{create_shared_secret, recover_onetime_private_key};
-use mc_crypto_ring_signature::{Verify, KeyGen, RistrettoPoint, Scalar};
+use mc_crypto_ring_signature::{Verify, KeyGen, RistrettoPoint, Scalar, RingMLSAG};
 use mc_transaction_core::range_proofs::check_range_proof;
 use mc_transaction_types::constants::RING_SIZE;
 use network::{MessageHandler, Receiver, Writer};
 use primary::PrimaryWorkerMessage;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::thread::sleep;
+use std::time::Duration;
 use store::Store;
 use tokio::sync::mpsc::{channel, Sender};
 use mc_transaction_core::tx::{Transaction, get_subaddress};
@@ -312,10 +314,12 @@ impl MessageHandler for WorkerReceiverHandler {
                         x = sk;
                     }
                 }
-                //for tx in block.txs {
+                for tx in block.txs {
+                    //RingMLSAG::verify(&tx.signature, message, ring, output_commitment).unwrap();
                     //Verify(&tx.signature, "msg", &R).unwrap();
-                    //check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
-                //}
+                    sleep(Duration::from_millis(40));
+                    check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
+                }
 
                 self
                     .tx_processor

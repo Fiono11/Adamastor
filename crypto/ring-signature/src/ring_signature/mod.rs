@@ -16,14 +16,14 @@ use mc_crypto_keys::{CompressedRistrettoPublic, RistrettoPublic};
 mod curve_scalar;
 mod error;
 mod key_image;
-//mod mlsag;
+mod mlsag;
 pub mod triptych;
 pub mod util;
 
 pub use curve_scalar::*;
 pub use error::Error;
 pub use key_image::*;
-//pub use mlsag::*;
+pub use mlsag::*;
 pub use triptych::*;
 use crate::CompressedCommitment;
 

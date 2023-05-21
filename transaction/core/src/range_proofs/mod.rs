@@ -175,25 +175,32 @@ fn convert_gens(src: &PedersenGens) -> BPPedersenGens {
     }
 }
 
-/*#[cfg(test)]
+#[cfg(test)]
 pub mod tests {
+    use std::time::{Instant, Duration};
+
     use super::*;
-    use crate::ring_signature::generators;
-    use curve25519_dalek::ristretto::RistrettoPoint;
-    use mc_util_test_helper::{get_seeded_rng, RngCore};
-
-    fn generate_and_check(values: Vec<u64>, blindings: Vec<Scalar>) {
-        let mut rng = get_seeded_rng();
-        let (proof, commitments) =
-            generate_range_proofs(&values, &blindings, &generators(0), &mut rng).unwrap();
-
-        match check_range_proofs(&proof, &commitments, &generators(0), &mut rng) {
-            Ok(_) => {} // This is expected.
-            Err(e) => panic!("{e:?}"),
-        }
-    }
 
     #[test]
+    fn generate_and_check() {
+        let mut rng = rand_core::OsRng;
+        let shared_secret = Scalar::random(&mut rng);
+        let generators = bulletproofs_og::PedersenGens::default();
+        let amount = 10;
+        let (range_proof, commitment) = generate_range_proof(&amount, &shared_secret, &generators, &mut rng).unwrap();
+        let range_proof_bytes = range_proof.to_bytes();
+
+        let start = Instant::now();
+
+        check_range_proof(&RangeProof::from_bytes(&range_proof_bytes).unwrap(), &commitment, &generators, &mut rng).unwrap();
+        
+        let end = Instant::now();
+		let duration = end.duration_since(start);
+    	let elapsed_ms = Duration::as_millis(&duration);
+		println!("Time elapsed: {} ms", elapsed_ms);
+    }
+
+    /*#[test]
     fn test_pow2_number_of_inputs() {
         let mut rng = get_seeded_rng();
         let vals: Vec<u64> = (0..2).map(|_| rng.next_u64()).collect();
@@ -229,5 +236,5 @@ pub mod tests {
             Ok(_) => panic!(),
             Err(_e) => {} // This is expected.
         }
-    }
-}*/
+    }*/
+}

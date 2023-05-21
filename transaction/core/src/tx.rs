@@ -8,7 +8,7 @@ use curve25519_dalek::{traits::Identity, constants::RISTRETTO_BASEPOINT_POINT, r
 use mc_account_keys::{PublicAddress, AccountKey, DEFAULT_SUBADDRESS_INDEX};
 use mc_crypto_digestible::{Digestible, MerlinTranscript};
 use mc_crypto_keys::{tx_hash::TxHash, CompressedRistrettoPublic, RistrettoPublic, RistrettoPrivate, PublicKey, ReprBytes};
-use mc_crypto_ring_signature::{KeyImage, get_tx_out_shared_secret, onetime_keys::{create_shared_secret, create_tx_out_public_key, create_tx_out_target_key, recover_onetime_private_key}, ReducedTxOut, CompressedCommitment, TriptychSignature, Sign, Scalar, KeyGen, RistrettoPoint};
+use mc_crypto_ring_signature::{KeyImage, get_tx_out_shared_secret, onetime_keys::{create_shared_secret, create_tx_out_public_key, create_tx_out_target_key, recover_onetime_private_key}, ReducedTxOut, CompressedCommitment, TriptychSignature, Sign, Scalar, KeyGen, RistrettoPoint, RingMLSAG, generators};
 use mc_transaction_types::{MaskedAmount, Amount, constants::RING_SIZE};
 use mc_util_from_random::FromRandom;
 use rand_core::{RngCore, CryptoRng, OsRng};
@@ -54,7 +54,7 @@ impl Transaction {
 
     /// Key image "spent" by this transaction.
     pub fn key_images(&self) -> KeyImage {
-        self.signature.key_image()
+        self.key_images()
     }
     
     /// Output public keys contained in this transaction.
@@ -283,7 +283,7 @@ pub fn create_transaction(
 
     let rep_account = AccountKey::default();
 
-    let shared_secret = Scalar::random(&mut rand_core::OsRng);
+    let shared_secret = Scalar::random(&mut rng);
 
     let output = TxOut::new(Amount::new(amount), recipient, &tx_private_key, rep_account.to_public_address(), shared_secret).unwrap();
 
@@ -301,7 +301,53 @@ pub fn create_transaction(
         }
     }
 
-    let generators = PedersenGens::default();
+    //let generator = generators();
+    let generators: PedersenGens = PedersenGens::default();
+
+    /*let mut message = [0u8; 32];
+    rng.fill_bytes(&mut message);
+
+    let mut ring: Vec<ReducedTxOut> = Vec::new();
+    for _i in 0..RING_SIZE {
+        let public_key = CompressedRistrettoPublic::from_random(&mut rng);
+        let target_key = CompressedRistrettoPublic::from_random(&mut rng);
+        let commitment = {
+            let value = amount;
+            let blinding = Scalar::random(&mut rng);
+            CompressedCommitment::new(value, blinding, &generator)
+        };
+        ring.push(ReducedTxOut {
+            public_key,
+            target_key,
+            commitment,
+        });
+    }
+
+    // The real input.
+    let onetime_private_key = RistrettoPrivate::from_random(&mut rng);
+
+    let value = rng.next_u64();
+    let blinding = Scalar::random(&mut rng);
+    let commitment = CompressedCommitment::new(value, blinding, &generator);
+
+    /*let reduced_tx_out = ReducedTxOut {
+        target_key: CompressedRistrettoPublic::from(RistrettoPublic::from(
+            &onetime_private_key,
+        )),
+        public_key: CompressedRistrettoPublic::from_random(&mut rng),
+        commitment,
+    };*/
+
+    let reduced_tx_out = ReducedTxOut::try_from(tx_out).unwrap();
+
+    //let real_index = rng.next_u64() as usize % (RING_SIZE + 1);
+    let real_index = 0;
+    ring.insert(real_index, reduced_tx_out);
+    assert_eq!(ring.len(), RING_SIZE + 1);
+
+    let output_blinding = Scalar::random(&mut rng);
+
+    let signature = RingMLSAG::sign(&message, &ring, real_index, &onetime_private_key, value, &blinding, &output_blinding, &generator, &mut rng).unwrap();*/
 
     let (range_proof, commitment) = generate_range_proof(&amount, &shared_secret, &generators, &mut OsRng).unwrap();
     let range_proof_bytes = range_proof.to_bytes();
@@ -434,7 +480,7 @@ mod tests {
                 },
                 &bob.change_subaddress(),
                 &tx_private_key,
-                RistrettoPublic::default(),
+                PublicAddress::default(),
                 Scalar::one(), // fix this
             )
             .unwrap();

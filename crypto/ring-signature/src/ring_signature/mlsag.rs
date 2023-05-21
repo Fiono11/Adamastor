@@ -15,7 +15,6 @@ use serde::{Deserialize, Serialize};
 use zeroize::Zeroizing;
 
 use crate::{
-    domain_separators::RING_MLSAG_CHALLENGE_DOMAIN_TAG,
     ring_signature::{
         hash_to_point, CurveScalar, Error, KeyImage, PedersenGens, Scalar, B_BLINDING,
     },
@@ -346,7 +345,7 @@ fn challenge(
     L1: &RistrettoPoint,
 ) -> Scalar {
     let mut hasher = Blake2b512::new();
-    hasher.update(&RING_MLSAG_CHALLENGE_DOMAIN_TAG);
+    //hasher.update(&RING_MLSAG_CHALLENGE_DOMAIN_TAG);
     hasher.update(message);
     hasher.update(key_image);
     hasher.update(L0.compress().as_bytes());

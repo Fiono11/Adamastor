@@ -425,7 +425,9 @@ pub fn Link(sgn_a: &TriptychSignature, sgn_b: &TriptychSignature) -> bool {
 
 #[cfg(test)]
 mod triptych_test {
-	use alloc::vec;
+	use std::time::{SystemTime, Instant, Duration};
+
+use alloc::vec;
 	use alloc::vec::Vec;
 	use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 	use curve25519_dalek::ristretto::RistrettoPoint;
@@ -479,7 +481,14 @@ mod triptych_test {
 
 		let sgn = triptych::Sign(&x, &M, &R);
 
+		let start = Instant::now();
+
 		let result = triptych::Verify(&sgn, &M, &R);
+		
+		let end = Instant::now();
+		let duration = end.duration_since(start);
+    	let elapsed_ms = Duration::as_millis(&duration);
+		println!("Time elapsed: {} ms", elapsed_ms);
 
 		assert!(result.is_ok());
 	}
