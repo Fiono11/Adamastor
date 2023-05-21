@@ -2,21 +2,21 @@
 
 //! Definition of a MobileCoin transaction and a MobileCoin TxOut
 
-use std::{fmt, array::TryFromSliceError};
+use std::{fmt};
 use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, AeadCore, aead::Aead, Nonce};
 use curve25519_dalek::{traits::Identity, constants::RISTRETTO_BASEPOINT_POINT, ristretto::CompressedRistretto};
-use mc_account_keys::{PublicAddress, AccountKey, DEFAULT_SUBADDRESS_INDEX};
+use mc_account_keys::{PublicAddress, AccountKey};
 use mc_crypto_digestible::{Digestible, MerlinTranscript};
-use mc_crypto_keys::{tx_hash::TxHash, CompressedRistrettoPublic, RistrettoPublic, RistrettoPrivate, PublicKey, ReprBytes};
-use mc_crypto_ring_signature::{KeyImage, get_tx_out_shared_secret, onetime_keys::{create_shared_secret, create_tx_out_public_key, create_tx_out_target_key, recover_onetime_private_key}, ReducedTxOut, CompressedCommitment, TriptychSignature, Sign, Scalar, KeyGen, RistrettoPoint, RingMLSAG, generators};
+use mc_crypto_keys::{tx_hash::TxHash, CompressedRistrettoPublic, RistrettoPublic, RistrettoPrivate, ReprBytes};
+use mc_crypto_ring_signature::{KeyImage, get_tx_out_shared_secret, onetime_keys::{create_shared_secret, create_tx_out_public_key, create_tx_out_target_key}, ReducedTxOut, CompressedCommitment, TriptychSignature, Sign, Scalar, KeyGen, RistrettoPoint};
 use mc_transaction_types::{MaskedAmount, Amount, constants::RING_SIZE};
 use mc_util_from_random::FromRandom;
-use rand_core::{RngCore, CryptoRng, OsRng};
+use rand_core::{OsRng};
 use serde::{Deserialize, Serialize};
 use prost::Message;
 use zeroize::Zeroize;
 use mc_common::Hash;
-use crate::range_proofs::{generate_range_proof, check_range_proof, self};
+use crate::range_proofs::{generate_range_proof};
 use crate::tx_error::{TxOutConversionError, ViewKeyMatchError, NewTxError};
 use bulletproofs_og::PedersenGens;
 
@@ -189,7 +189,7 @@ impl TxOut {
         let nonce2 = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
         let ciphertext2 = cipher2.encrypt(&nonce2, shared_secret.to_bytes().as_ref()).unwrap();
         
-        let ss = (shared_secret * RISTRETTO_BASEPOINT_POINT);
+        let ss = shared_secret * RISTRETTO_BASEPOINT_POINT;
 
         let masked_amount = MaskedAmount::new(amount, &RistrettoPublic(ss)).unwrap();
 
@@ -265,8 +265,8 @@ impl TryFrom<&TxOut> for ReducedTxOut {
 /// * `recipient` - The recipient of the new transaction.
 /// * `rng` - The randomness used by this function
 pub fn create_transaction(
-    tx_out: &TxOut,
-    sender: &AccountKey,
+    _tx_out: &TxOut,
+    _sender: &AccountKey,
     recipient: &PublicAddress,
     amount: u64,
     id: Vec<u8>, 
@@ -390,13 +390,13 @@ fn get_output_public_keys(
 mod tests {
     use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
     use mc_account_keys::{
-        AccountKey, PublicAddress, CHANGE_SUBADDRESS_INDEX, DEFAULT_SUBADDRESS_INDEX,
+        AccountKey, PublicAddress,
     };
-    use mc_crypto_keys::{RistrettoPrivate, RistrettoPublic, CompressedRistrettoPublic};
+    use mc_crypto_keys::{RistrettoPrivate, RistrettoPublic};
     use mc_crypto_ring_signature::{get_tx_out_shared_secret, onetime_keys::create_shared_secret, Scalar};
     use mc_transaction_types::Amount;
     use mc_util_from_random::FromRandom;
-    use prost::Message;
+    
 
     use super::TxOut;
 
@@ -485,12 +485,12 @@ mod tests {
             )
             .unwrap();
 
-            let ss = get_tx_out_shared_secret(
+            let _ss = get_tx_out_shared_secret(
                 bob.view_private_key(),
                 &RistrettoPublic::try_from(&tx_out.aux).unwrap(),
             );
 
-            let ss2 = get_tx_out_shared_secret(
+            let _ss2 = get_tx_out_shared_secret(
                 &tx_private_key,
                 &bob_addr.view_public_key(),
             );

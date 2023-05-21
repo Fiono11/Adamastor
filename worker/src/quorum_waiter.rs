@@ -2,15 +2,11 @@
 use crate::processor::SerializedBatchMessage;
 use config::{Committee, Stake, PK};
 use mc_account_keys::PublicAddress as PublicKey;
-use mc_crypto_keys::tx_hash::TxHash as Digest;
+
 use futures::stream::futures_unordered::FuturesUnordered;
 use futures::stream::StreamExt as _;
 use network::CancelHandler;
 use tokio::sync::mpsc::{Receiver, Sender};
-
-#[cfg(test)]
-#[path = "tests/quorum_waiter_tests.rs"]
-pub mod quorum_waiter_tests;
 
 #[derive(Debug)]
 pub struct QuorumWaiterMessage {

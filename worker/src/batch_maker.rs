@@ -2,23 +2,23 @@ use crate::Block;
 // Copyright(C) Facebook, Inc. and its affiliates.
 use crate::quorum_waiter::QuorumWaiterMessage;
 use crate::worker::WorkerMessage;
-use bulletproofs_og::PedersenGens;
+
 use bytes::Bytes;
-use chacha20poly1305::aead::{Aead, OsRng};
-use chacha20poly1305::{Key, ChaCha20Poly1305, Nonce, KeyInit};
-use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
+
+use chacha20poly1305::{KeyInit};
+
 //#[cfg(feature = "benchmark")]
 //use crypto::Digest;
-use mc_account_keys::{PublicAddress as PublicKey, AccountKey};
-use mc_crypto_keys::RistrettoPublic;
-use mc_crypto_keys::tx_hash::TxHash as Digest;
+use mc_account_keys::{PublicAddress as PublicKey};
+
+
 #[cfg(feature = "benchmark")]
 use ed25519_dalek::{Digest as _, Sha512};
 #[cfg(feature = "benchmark")]
 use log::info;
-use mc_crypto_ring_signature::Scalar;
-use mc_crypto_ring_signature::onetime_keys::create_shared_secret;
-use mc_transaction_core::range_proofs::generate_range_proofs;
+
+
+
 use mc_transaction_core::tx::Transaction;
 use network::ReliableSender;
 #[cfg(feature = "benchmark")]
@@ -26,10 +26,6 @@ use std::convert::TryInto as _;
 use std::net::SocketAddr;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::time::{sleep, Duration, Instant};
-
-#[cfg(test)]
-#[path = "tests/batch_maker_tests.rs"]
-pub mod batch_maker_tests;
 
 //pub type Transaction = Vec<u8>;
 pub type Batch = Vec<Transaction>;

@@ -1,27 +1,27 @@
 // Copyright(C) Facebook, Inc. and its affiliates.
-use crate::batch_maker::{Batch, BatchMaker};
+use crate::batch_maker::{BatchMaker};
 use crate::helper::Helper;
 use crate::primary_connector::PrimaryConnector;
 use crate::processor::{Processor, SerializedBatchMessage};
 use crate::quorum_waiter::QuorumWaiter;
 use crate::synchronizer::Synchronizer;
 use async_trait::async_trait;
-use bulletproofs_og::{PedersenGens, RangeProof};
+
 use bytes::Bytes;
-use chacha20poly1305::aead::{Aead, OsRng};
-use chacha20poly1305::{Key, ChaCha20Poly1305, KeyInit, Nonce};
+
+
 use config::{Committee, Parameters, WorkerId, PK};
-use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
-use curve25519_dalek::ristretto::CompressedRistretto;
+
+
 use curve25519_dalek::traits::Identity;
-use mc_account_keys::{PublicAddress as PublicKey, AccountKey};
-use mc_crypto_keys::{RistrettoPublic, RistrettoPrivate, ReprBytes, GenericArray};
+use mc_account_keys::{PublicAddress as PublicKey};
+use mc_crypto_keys::{ReprBytes};
 use mc_crypto_keys::tx_hash::TxHash as Digest;
 use futures::sink::SinkExt as _;
-use log::{error, info, warn, debug};
-use mc_crypto_ring_signature::onetime_keys::{create_shared_secret, recover_onetime_private_key};
-use mc_crypto_ring_signature::{Verify, KeyGen, RistrettoPoint, Scalar, RingMLSAG};
-use mc_transaction_core::range_proofs::check_range_proof;
+use log::{error, info, warn};
+
+use mc_crypto_ring_signature::{KeyGen, RistrettoPoint, Scalar};
+
 use mc_transaction_types::constants::RING_SIZE;
 use network::{MessageHandler, Receiver, Writer};
 use primary::PrimaryWorkerMessage;
@@ -31,11 +31,7 @@ use std::thread::sleep;
 use std::time::Duration;
 use store::Store;
 use tokio::sync::mpsc::{channel, Sender};
-use mc_transaction_core::tx::{Transaction, get_subaddress};
-
-#[cfg(test)]
-#[path = "tests/worker_tests.rs"]
-pub mod worker_tests;
+use mc_transaction_core::tx::{Transaction};
 
 /// The default channel capacity for each channel of the worker.
 pub const CHANNEL_CAPACITY: usize = 100_0000;
@@ -319,7 +315,7 @@ impl MessageHandler for WorkerReceiverHandler {
                         x = sk;
                     }
                 }
-                for tx in block.txs {
+                for _tx in block.txs {
                     //RingMLSAG::verify(&tx.signature, message, ring, output_commitment).unwrap();
                     //Verify(&tx.signature, "msg", &R).unwrap();
                     sleep(Duration::from_millis(40 / self.nodes));

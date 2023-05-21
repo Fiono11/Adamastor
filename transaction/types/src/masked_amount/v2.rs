@@ -247,7 +247,7 @@ mod amount_tests {
 
     use super::*;
     use crate::proptest_fixtures::*;
-    use mc_crypto_ring_signature::{generators, CompressedCommitment};
+    
     use proptest::prelude::*;
 
     proptest! {
@@ -255,7 +255,7 @@ mod amount_tests {
         /// MaskedAmount::new() should return Ok for valid values and blindings.
         fn test_new_ok(
             value in any::<u64>(),
-            token_id in any::<u64>(),
+            _token_id in any::<u64>(),
             tx_out_shared_secret in arbitrary_ristretto_public()) {
                 let amount = Amount { value };
              assert!(MaskedAmount::new(amount, &tx_out_shared_secret).is_ok());
@@ -265,7 +265,7 @@ mod amount_tests {
         /// get_value should return InconsistentCommitment if the masked value is incorrect.
         fn test_get_value_incorrect_masked_value(
             value in any::<u64>(),
-            token_id in any::<u64>(),
+            _token_id in any::<u64>(),
             other_masked_value in any::<u64>(),
             shared_secret in arbitrary_ristretto_public())
         {
@@ -283,7 +283,7 @@ mod amount_tests {
         /// get_value should return an Error if shared_secret is incorrect.
         fn test_get_value_invalid_shared_secret(
             value in any::<u64>(),
-            token_id in any::<u64>(),
+            _token_id in any::<u64>(),
             shared_secret in arbitrary_ristretto_public(),
             other_shared_secret in arbitrary_ristretto_public(),
         ) {
@@ -298,7 +298,7 @@ mod amount_tests {
         /// test the length when this Amount is serialized
         fn test_serialization_length(
             value in any::<u64>(),
-            token_id in any::<u64>(),
+            _token_id in any::<u64>(),
             shared_secret in arbitrary_ristretto_public()
         ) {
             let amount = Amount { value };

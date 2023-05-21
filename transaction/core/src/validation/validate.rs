@@ -4,12 +4,12 @@
 
 extern crate alloc;
 
-use crate::tx::{Transaction, TxPrefix, TxOut};
+use crate::tx::{Transaction, TxPrefix};
 
 use super::error::{TransactionValidationError, TransactionValidationResult};
-use alloc::{format, vec::Vec};
-use mc_common::HashSet;
-use mc_crypto_ring_signature::{Sign, Verify, RistrettoPoint, Scalar, KeyGen};
+use alloc::{vec::Vec};
+
+use mc_crypto_ring_signature::{RistrettoPoint, Scalar, KeyGen};
 use mc_transaction_types::constants::{MAX_INPUTS, RING_SIZE, MAX_OUTPUTS};
 use rand_core::{CryptoRng, RngCore};
 use curve25519_dalek::traits::Identity;
@@ -112,8 +112,8 @@ pub fn validate_ring_sizes(
 /// * The transaction does not create or destroy mobilecoins.
 /// * The signature is valid according to the rules of this block version
 pub fn validate_signature<R: RngCore + CryptoRng>(
-    tx: &Transaction,
-    rng: &mut R,
+    _tx: &Transaction,
+    _rng: &mut R,
 ) -> TransactionValidationResult<()> {
 	let mut R: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
 	let mut x: Scalar = Scalar::one();
