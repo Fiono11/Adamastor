@@ -34,13 +34,13 @@ class Bench:
     def __init__(self, ctx):
         self.manager = InstanceManager.make()
         self.settings = self.manager.settings
-        try:
+        '''try:
             ctx.connect_kwargs.pkey = RSAKey.from_private_key_file(
                 self.manager.settings.key_path
             )
             self.connect = ctx.connect_kwargs
         except (IOError, PasswordRequiredException, SSHException) as e:
-            raise BenchError('Failed to load SSH key', e)
+            raise BenchError('Failed to load SSH key', e)'''
 
     def _check_stderr(self, output):
         if isinstance(output, dict):
@@ -57,30 +57,28 @@ class Bench:
             'sudo apt-get update',
             'sudo apt-get -y upgrade',
             'sudo apt-get -y autoremove',
-
-            # The following dependencies prevent the error: [error: linker `cc` not found].
             'sudo apt-get -y install build-essential',
             'sudo apt-get -y install cmake',
-
-            # Install rust (non-interactive).
             'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y',
             'source $HOME/.cargo/env',
             'rustup default stable',
-
-            # This is missing from the Rocksdb installer (needed for Rocksdb).
             'sudo apt-get install -y clang',
-
-            # Clone the repo.
-            f'(git clone {self.settings.repo_url} || (cd {self.settings.repo_name} ; git pull))'
+            f'cd /home/fiono/Desktop/ && (git clone {self.settings.repo_url} || (cd {self.settings.repo_name} ; git pull))'
         ]
-        hosts = self.manager.hosts(flat=True)
-        try:
-            g = Group(*hosts, user='ubuntu', connect_kwargs=self.connect)
-            g.run(' && '.join(cmd), hide=True)
-            Print.heading(f'Initialized testbed of {len(hosts)} nodes')
-        except (GroupException, ExecutionError) as e:
-            e = FabricError(e) if isinstance(e, GroupException) else e
-            raise BenchError('Failed to install repo on testbed', e)
+
+        # Connect to hosts
+        self.manager.connect()
+
+        # Execute commands
+        for command in cmd:
+            outputs = self.manager.execute_command(command)
+            for host, output in outputs.items():
+                print(f"Host {host} output:\n{output}")
+
+        Print.heading(f'Initialized testbed of {len(self.manager.hosts())} nodes')
+
+        # Disconnect from hosts
+        self.manager.disconnect()
 
     def kill(self, hosts=[], delete_logs=False):
         assert isinstance(hosts, list)
