@@ -67,20 +67,20 @@ class Bench:
             'source $HOME/.cargo/env',
             'rustup default nightly',
             'sudo apt-get install -y clang',
-            f'cd /home/fiono/Desktop/ && (git clone {self.settings.repo_url} || (cd {self.settings.repo_name} ; git pull))'
+            f'cd /home/fiono/ && (git clone {self.settings.repo_url} || (cd {self.settings.repo_name} ; git pull))'
         ]
 
         # Connect to hosts
         self.manager.connect()
 
-        names = self.manager.connect()
+        names = self.manager.names()
 
         # Execute commands
         for command in cmd:
             for name in names:
                 outputs = self.manager.execute_command(name, command)
-                for host, output in outputs.items():
-                    print(f"Host {host} output:\n{output}")
+                #for host, output in outputs:
+                    #print(f"Host {host} output:\n{output}")
 
         Print.heading(f'Initialized testbed of {len(self.manager.hosts())} nodes')
 
@@ -308,7 +308,11 @@ class Bench:
         # Connect to hosts
         self.manager.connect()
 
+        cmd = f'cd {self.settings.repo_name}/benchmark'
         names = self.manager.names()
+
+        for name in names:
+            self.manager.execute_command(name, cmd)
 
         # Select which hosts to use.
         selected_hosts = self._select_hosts(bench_parameters)
