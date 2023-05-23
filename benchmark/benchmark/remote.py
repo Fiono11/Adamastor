@@ -132,10 +132,10 @@ class Bench:
             f'(cd {self.settings.repo_name} && git checkout -f {self.settings.branch})',
             f'(cd {self.settings.repo_name} && git pull -f)',
             'source $HOME/.cargo/env',
-            f'(cd {self.settings.repo_name}/node && {CommandMaker.compile()})',
-            CommandMaker.alias_binaries(
-                f'./{self.settings.repo_name}/target/release/'
-            )
+            #f'(cd {self.settings.repo_name}/node && {CommandMaker.compile()})',
+            #CommandMaker.alias_binaries(
+                #f'./{self.settings.repo_name}/target/release/'
+            #)
         ]
 
         # Execute commands on each IP
@@ -149,7 +149,7 @@ class Bench:
 
         for host_name in hosts_names:
             # Cleanup all local configuration files.
-            cmd = CommandMaker.cleanup()
+            cmd = f'(cd {self.settings.repo_name}/benchmark && {CommandMaker.cleanup()})'
             self.manager.execute_command(host_name, cmd)
 
             # Recompile the latest code.
@@ -161,13 +161,13 @@ class Bench:
             self.manager.execute_command(host_name, cmd)
             #self.manager.execute_command(host_name, f'./node generate_keys --filename .node-0.json')
 
-            # Generate configuration files.
-            keys = []
-            key_files = [PathMaker.key_file(i) for i in range(len(hosts))]
-            for filename in key_files:
-                cmd = CommandMaker.generate_key(filename)
-                self.manager.execute_command(host_name, cmd, check=False)
-                keys += [Key.from_file(filename)]
+        # Generate configuration files.
+        keys = []
+        key_files = [PathMaker.key_file(i) for i in range(len(hosts))]
+        for filename in key_files:
+            cmd = CommandMaker.generate_key(filename)
+            self.manager.execute_command(hosts_names[0], cmd, check=False)
+            keys += [Key.from_file(filename)]
 
         names = [x.name for x in keys]
 
@@ -182,23 +182,26 @@ class Bench:
             )
         committee = Committee(addresses, self.settings.base_port)
         cmd = CommandMaker.make_committee(committee, PathMaker.committee_file())
+        #cmd1 = CommandMaker.make_parameters(committee, PathMaker.parameters_file())
         #committee.print(PathMaker.committee_file())
 
         for host_name in hosts_names:
             self.manager.execute_command(host_name, cmd)
+            #self.manager.execute_command(host_name, cmd1)
 
-        node_parameters.print(PathMaker.parameters_file())
+        #node_parameters.print(PathMaker.parameters_file())
 
         # Cleanup all nodes and upload configuration files.
         names = names[:len(names)-bench_parameters.faults]
         progress = progress_bar(names, prefix='Uploading config files:')
-        for i, name in enumerate(progress):
-            for ip in hosts_names:
-                command = f'{CommandMaker.cleanup()} || true'
-                self.manager.execute_command(ip, command)
-                self.manager.execute_command(ip, f'put {PathMaker.committee_file()} .')
-                self.manager.execute_command(ip, f'put {PathMaker.key_file(i)} .')
-                self.manager.execute_command(ip, f'put {PathMaker.parameters_file()} .')
+        #for i, name in enumerate(progress):
+            #for ip in hosts_names:
+                #if i > 0:
+                    #command = f'{CommandMaker.cleanup()} || true'
+                    #self.manager.execute_command(ip, command)
+                    #self.manager.execute_command(ip, f'cp {PathMaker.committee_file()} .')
+                    #self.manager.execute_command(ip, f'cp .node-{i}.json .')
+                    #self.manager.execute_command(ip, f'put {PathMaker.parameters_file()} .')
 
         return committee
 
@@ -308,11 +311,7 @@ class Bench:
         # Connect to hosts
         self.manager.connect()
 
-        cmd = f'cd {self.settings.repo_name}/benchmark'
         names = self.manager.names()
-
-        for name in names:
-            self.manager.execute_command(name, cmd)
 
         # Select which hosts to use.
         selected_hosts = self._select_hosts(bench_parameters)

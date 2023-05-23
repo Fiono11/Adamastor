@@ -29,8 +29,12 @@ class CommandMaker:
     @staticmethod
     def download_workers_logs():
         return f'cat {PathMaker.worker_log_file(0, 0)} > {PathMaker.worker_log_file(0, 0)}'
-
     
+    @staticmethod
+    def make_parameters(parameters, filename):
+        assert isinstance(filename, str)
+        return f'echo \'{json.dumps(parameters.json, indent=4, sort_keys=True)}\' > {filename}'
+
     @staticmethod
     def make_committee(committee, filename):
         assert isinstance(filename, str)

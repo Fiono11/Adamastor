@@ -45,11 +45,11 @@ class InstanceManager:
     def execute_command(self, ip, command, check=False, cwd=None):
         print("ip: ", ip)
         print("command: ", command)
-        if ip != self.settings.localhost:
+        if ip == self.settings.localhost:
             # Run the command locally
-            #output = subprocess.run(command, shell=True, check=check, capture_output=True, text=True, cwd=cwd)
-            #return output.stdout
-        #else:
+            output = subprocess.run(command, shell=True, check=check, capture_output=True, text=True, cwd=cwd)
+            return output.stdout
+        else:
             # Run the command on the SSH instance
             client = self.clients.get(ip)
             if client:
