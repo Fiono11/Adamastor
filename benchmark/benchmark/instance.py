@@ -1,3 +1,4 @@
+import subprocess
 import paramiko
 from benchmark.settings import Settings, SettingsError
 
@@ -25,28 +26,45 @@ class InstanceManager:
             host = next((host for host in self.settings.ssh_details if host["name"] == name), None)
             if host:
                 try:
+                    print(f"Connecting to {host['host']}...")
                     client.connect(
                         host['host'], 
                         port=host['port'], 
                         username=host['username'], 
                         password=host['password']
                     )
+                    print(f"Connected to {host['host']}")
                 except paramiko.AuthenticationException:
                     raise SSHError(f"Authentication failed for {name}, please verify your credentials")
 
     def disconnect(self):
         for client in self.clients.values():
             client.close()
+        print("Disconnected from all hosts.")
 
-    def execute_command(self, command):
-        outputs = {}
-        for name, client in self.clients.items():
-            stdin, stdout, stderr = client.exec_command(command)
-            outputs[name] = stdout.read().decode()
-        return outputs
+    def execute_command(self, ip, command):
+        print("ip: ", ip)
+        print("command: ", command)
+        if ip == self.settings.localhost:
+            # Run the command locally
+            output = subprocess.run(command, shell=True, capture_output=True, text=True)
+            return output.stdout
+        else:
+            # Run the command on the SSH instance
+            client = self.clients.get(ip)
+            if client:
+                stdin, stdout, stderr = client.exec_command(command)
+                return stdout.read().decode()
+            else:
+                raise SSHError(f"No client found for IP: {ip}")
 
     def hosts(self):
-        return [host['host'] for host in self.settings.ssh_details]
+        ssh_hosts = [host['host'] for host in self.settings.ssh_details]
+        return [self.settings.localhost] + ssh_hosts
+    
+    def names(self):
+        ssh_names = [name['name'] for name in self.settings.ssh_details]
+        return [self.settings.localhost] + ssh_names
 
     def print_info(self):
         for name, client in self.clients.items():

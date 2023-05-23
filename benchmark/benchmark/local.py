@@ -98,7 +98,7 @@ class LocalBench:
                         PathMaker.committee_file(),
                         PathMaker.db_path(i),
                         PathMaker.parameters_file(),
-                        str(self.bench_parameters.nodes[0]),
+                        #str(self.bench_parameters.nodes[0]),
                         debug=debug
                     )
                     log_file = PathMaker.primary_log_file(i)
@@ -112,7 +112,7 @@ class LocalBench:
                             PathMaker.committee_file(),
                             PathMaker.db_path(i, id),
                             PathMaker.parameters_file(),
-                            str(self.bench_parameters.nodes[0]),
+                            #str(self.bench_parameters.nodes[0]),
                             id,  # The worker's id.
                             debug=debug
                         )

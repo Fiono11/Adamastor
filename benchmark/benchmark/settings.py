@@ -5,7 +5,7 @@ class SettingsError(Exception):
     pass
 
 class Settings:
-    def __init__(self, ssh_details, repo_name, repo_url, branch):
+    def __init__(self, ssh_details, localhost, repo_name, repo_url, branch, port):
         if isinstance(ssh_details, list):
             for ssh_detail in ssh_details:
                 if not all(isinstance(ssh_detail.get(key), str) for key in ['name', 'host', 'username', 'password']):
@@ -19,6 +19,9 @@ class Settings:
         self.repo_name = repo_name
         self.repo_url = repo_url
         self.branch = branch
+        self.localhost = localhost
+        print("localhost: ", self.localhost)
+        self.base_port = port
 
     @classmethod
     def load(cls, filename):
@@ -28,9 +31,11 @@ class Settings:
 
             return cls(
                 data['ssh_details'],
+                data['localhost'],
                 data['repo']['name'],
                 data['repo']['url'],
                 data['repo']['branch'],
+                data['port'],
             )
         except (OSError, JSONDecodeError) as e:
             raise SettingsError(str(e))

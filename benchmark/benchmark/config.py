@@ -64,6 +64,7 @@ class Committee:
         self.json = {'authorities': OrderedDict()}
         for name, hosts in addresses.items():
             host = hosts.pop(0)
+            print("host: ", host)
             primary_addr = {
                 'primary_to_primary': f'{host}:{port}',
                 'worker_to_primary': f'{host}:{port + 1}'

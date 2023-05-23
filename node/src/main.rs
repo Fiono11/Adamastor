@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
                 .args_from_usage("--committee=<FILE> 'The file containing committee information'")
                 .args_from_usage("--parameters=[FILE] 'The file containing the node parameters'")
                 .args_from_usage("--store=<PATH> 'The path where to create the data store'")
-                .args_from_usage("--nodes=<INT> 'The number of nodes'")
+                //.args_from_usage("--nodes=<INT> 'The number of nodes'")
                 .subcommand(SubCommand::with_name("primary").about("Run a single primary"))
                 .subcommand(
                     SubCommand::with_name("worker")
@@ -105,7 +105,8 @@ async fn main() -> Result<()> {
 async fn run(matches: &ArgMatches<'_>) -> Result<()> {
     //sleep(std::time::Duration::from_millis(8000));
 
-    let nodes: u64 = matches.value_of("nodes").unwrap().parse().unwrap();
+    //let nodes: u64 = matches.value_of("nodes").unwrap().parse().unwrap();
+    let nodes = 0;
     let key_file = matches.value_of("keys").unwrap();
     let committee_file = matches.value_of("committee").unwrap();
     let parameters_file = matches.value_of("parameters");
