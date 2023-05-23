@@ -11,7 +11,6 @@ extern crate alloc;
 use alloc::vec::Vec;
 use bulletproofs_og::{BulletproofGens, PedersenGens as BPPedersenGens, RangeProof};
 use curve25519_dalek::{ristretto::CompressedRistretto, scalar::Scalar};
-use mc_crypto_ring_signature::PedersenGens;
 use mc_transaction_types::domain_separators::BULLETPROOF_DOMAIN_TAG;
 use merlin::Transcript;
 use rand_core::{CryptoRng, RngCore};
@@ -162,16 +161,6 @@ fn resize_slice_to_pow2<T: Clone>(slice: &[T]) -> Result<Vec<T>, Error> {
     } else {
         // The next power of two would exceed the maximum value of usize.
         Err(Error::ResizeError)
-    }
-}
-
-/// Convert from the mc_crypto_ring_signature::PedersenGens to BPPedersenGens.
-/// These types are identical, but we need a version of it in the lower-level
-/// crate to break dependency on the bulletproofs crate.
-fn convert_gens(src: &PedersenGens) -> BPPedersenGens {
-    BPPedersenGens {
-        B: src.B,
-        B_blinding: src.B_blinding,
     }
 }
 

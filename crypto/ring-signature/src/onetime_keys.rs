@@ -81,7 +81,7 @@ use mc_crypto_keys::{RistrettoPrivate, RistrettoPublic};
 
 
 
-const g: RistrettoPoint = RISTRETTO_BASEPOINT_POINT;
+const G: RistrettoPoint = RISTRETTO_BASEPOINT_POINT;
 
 /// Hashes a curve point to a Scalar.
 fn hash_to_scalar(point: RistrettoPoint) -> Scalar {
@@ -110,7 +110,7 @@ pub fn create_tx_out_target_key(
     };
 
     let D = recipient.spend_public_key().as_ref();
-    RistrettoPublic::from(Hs * g + D)
+    RistrettoPublic::from(Hs * G + D)
 }
 
 /// Creates the `tx_out_public_key = r * D` for an output sent to subaddress (C,
@@ -155,7 +155,7 @@ pub fn recover_public_subaddress_spend_key(
     };
 
     let P = tx_out_target_key.as_ref();
-    RistrettoPublic::from(P - Hs * g)
+    RistrettoPublic::from(P - Hs * G)
 }
 
 /// Computes the onetime private key `Hs( a * R ) + d`.

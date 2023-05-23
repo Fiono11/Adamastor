@@ -1,7 +1,5 @@
 // Copyright(C) Facebook, Inc. and its affiliates.
 use anyhow::{Context, Result};
-use bulletproofs::PedersenGens;
-use bulletproofs::RangeProof;
 use bytes::BufMut as _;
 use bytes::BytesMut;
 use clap::{crate_name, crate_version, App, AppSettings};
@@ -9,7 +7,6 @@ use curve25519_dalek::scalar::Scalar;
 use env_logger::Env;
 use futures::future::join_all;
 use futures::sink::SinkExt as _;
-use log::debug;
 use log::{info, warn};
 use mc_account_keys::AccountKey;
 use mc_account_keys::PublicAddress;
@@ -18,16 +15,11 @@ use mc_transaction_core::tx::TxOut;
 use mc_transaction_core::tx::create_transaction;
 use mc_transaction_types::Amount;
 use rand::Rng;
-use rand::SeedableRng;
-use rand::rngs::StdRng;
-use worker::Block;
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::time::{interval, sleep, Duration, Instant};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 use bytes::Bytes;
-use rand::thread_rng;
-use std::convert::TryInto;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -135,11 +127,8 @@ impl Client {
         let tx_out = TxOut::new(amount, &recipient, &tx_private_key, sender.to_public_address(), coin_key).unwrap(); 
         let mut tx = create_transaction(&tx_out, &sender, &recipient, amount.value, Vec::new());
         let mut id = BytesMut::with_capacity(size);
-        let mut tx_counter = 0;
             
         'main: loop {
-            //let mut txs = Vec::new();
-
             interval.as_mut().tick().await;
             let now = Instant::now();
     
@@ -158,7 +147,7 @@ impl Client {
                     tx.id = id.to_vec();
                     let message = bincode::serialize(&tx.clone()).unwrap();
                     id.resize(size, 0u8);
-                    id.split();
+                    //id.split();
 
                     //info!("Sending transaction {}", tx.tx_hash());
                     let bytes = Bytes::from(message);

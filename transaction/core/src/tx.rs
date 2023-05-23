@@ -7,7 +7,7 @@ use chacha20poly1305::{ChaCha20Poly1305, Key, KeyInit, AeadCore, aead::Aead, Non
 use curve25519_dalek::{traits::Identity, constants::RISTRETTO_BASEPOINT_POINT, ristretto::CompressedRistretto};
 use mc_account_keys::{PublicAddress, AccountKey};
 use mc_crypto_digestible::{Digestible, MerlinTranscript};
-use mc_crypto_keys::{tx_hash::TxHash, CompressedRistrettoPublic, RistrettoPublic, RistrettoPrivate, ReprBytes};
+use mc_crypto_keys::{tx_hash::TxHash, CompressedRistrettoPublic, RistrettoPublic, RistrettoPrivate};
 use mc_crypto_ring_signature::{KeyImage, get_tx_out_shared_secret, onetime_keys::{create_shared_secret, create_tx_out_public_key, create_tx_out_target_key}, ReducedTxOut, CompressedCommitment, TriptychSignature, Sign, Scalar, KeyGen, RistrettoPoint};
 use mc_transaction_types::{MaskedAmount, Amount, constants::RING_SIZE};
 use mc_util_from_random::FromRandom;
@@ -54,7 +54,7 @@ impl Transaction {
 
     /// Key image "spent" by this transaction.
     pub fn key_images(&self) -> KeyImage {
-        self.key_images()
+        self.signature.key_image
     }
     
     /// Output public keys contained in this transaction.
@@ -178,13 +178,13 @@ impl TxOut {
 
         //let shared_secret = Scalar::random(&mut rand_core::OsRng);
 
-        let aB_bytes = shared_secret1.0.compress();
-        let key1 = Key::from_slice(aB_bytes.as_bytes());
+        let a_b_bytes = shared_secret1.0.compress();
+        let key1 = Key::from_slice(a_b_bytes.as_bytes());
         let cipher1 = ChaCha20Poly1305::new(&key1);
         let ciphertext1 = cipher1.encrypt(&Nonce::default(), shared_secret.to_bytes().as_ref()).unwrap();
 
-        let aC_bytes = shared_secret2.0.compress();
-        let key2 = Key::from_slice(aC_bytes.as_bytes());
+        let a_c_bytes = shared_secret2.0.compress();
+        let key2 = Key::from_slice(a_c_bytes.as_bytes());
         let cipher2 = ChaCha20Poly1305::new(&key2);
         let nonce2 = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
         let ciphertext2 = cipher2.encrypt(&nonce2, shared_secret.to_bytes().as_ref()).unwrap();
@@ -289,12 +289,12 @@ pub fn create_transaction(
 
     let prefix = TxPrefix::new(inputs, vec![output]);
 
-    let mut R: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
+    let mut r: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
     let mut x: Scalar = Scalar::one();
 
     for i in 0..RING_SIZE {
         let (sk, pk) = KeyGen();
-        R[i] = pk;
+        r[i] = pk;
 
         if i == 0 {
             x = sk;
@@ -352,7 +352,7 @@ pub fn create_transaction(
     let (range_proof, commitment) = generate_range_proof(&amount, &shared_secret, &generators, &mut OsRng).unwrap();
     let range_proof_bytes = range_proof.to_bytes();
 
-    let signature = Sign(&x, "msg", &R);
+    let signature = Sign(&x, "msg", &r);
 
     Transaction { prefix, signature, range_proof_bytes, commitment, id }
 }
@@ -361,7 +361,7 @@ pub fn create_transaction(
 pub fn get_subaddress(
     account: &AccountKey,
     index: u64,
-) -> (RistrettoPrivate, RistrettoPrivate, PublicAddress) {
+) -> (RistrettoPublic, RistrettoPublic, PublicAddress) {
     // (view, spend)
     let (c, d) = (
         account.subaddress_view_private(index),
@@ -369,9 +369,9 @@ pub fn get_subaddress(
     );
 
     // (View, Spend)
-    let (C, D) = (RistrettoPublic::from(&c), RistrettoPublic::from(&d));
+    let (c, d) = (RistrettoPublic::from(&c), RistrettoPublic::from(&d));
     // Look out! The argument ordering here is weird.
-    let subaddress = PublicAddress::new(&D, &C);
+    let subaddress = PublicAddress::new(&d, &c);
 
     (c, d, subaddress)
 }

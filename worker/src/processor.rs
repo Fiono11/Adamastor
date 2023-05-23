@@ -21,7 +21,7 @@ impl Processor {
         // Our worker's id.
         id: WorkerId,
         // The persistent storage.
-        mut store: Store,
+        mut _store: Store,
         // Input channel to receive batches.
         mut rx_batch: Receiver<SerializedBatchMessage>,
         // Output channel to send out batches' digests.

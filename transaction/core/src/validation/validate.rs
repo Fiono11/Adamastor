@@ -115,15 +115,15 @@ pub fn validate_signature<R: RngCore + CryptoRng>(
     _tx: &Transaction,
     _rng: &mut R,
 ) -> TransactionValidationResult<()> {
-	let mut R: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
-	let mut x: Scalar = Scalar::one();
+	let mut r: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
+	let mut _x: Scalar = Scalar::one();
 
 	for i in 0..RING_SIZE {
 		let (sk, pk) = KeyGen();
-		R[i] = pk;
+		r[i] = pk;
 
 		if i == 0 {
-			x = sk;
+			_x = sk;
 		}
 	}
 

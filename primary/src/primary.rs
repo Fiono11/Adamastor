@@ -23,7 +23,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use store::Store;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
-use mc_crypto_keys::{SignatureService, RistrettoPrivate, ReprBytes};
+use mc_crypto_keys::{SignatureService, RistrettoPrivate};
 use config::PK as PublicKey;
 use mc_crypto_keys::tx_hash::TxHash as Digest;
 

@@ -6,15 +6,10 @@ use crate::processor::{Processor, SerializedBatchMessage};
 use crate::quorum_waiter::QuorumWaiter;
 use crate::synchronizer::Synchronizer;
 use async_trait::async_trait;
-
 use bulletproofs_og::{RangeProof, PedersenGens};
 use bytes::Bytes;
-
-
 use chacha20poly1305::aead::OsRng;
 use config::{Committee, Parameters, WorkerId, PK};
-
-
 use curve25519_dalek::traits::Identity;
 use mc_account_keys::{PublicAddress as PublicKey};
 use mc_crypto_keys::tx_hash::TxHash as Digest;
@@ -29,8 +24,6 @@ use network::{MessageHandler, Receiver, Writer};
 use primary::PrimaryWorkerMessage;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::thread::sleep;
-use std::time::Duration;
 use store::Store;
 use tokio::sync::mpsc::{channel, Sender};
 use mc_transaction_core::tx::{Transaction};
@@ -63,7 +56,7 @@ pub struct Worker {
     parameters: Parameters,
     /// The persistent storage.
     store: Store,
-    nodes: u64,
+    _nodes: u64,
 }
 
 impl Worker {
@@ -82,14 +75,14 @@ impl Worker {
             committee,
             parameters,
             store,
-            nodes,
+            _nodes: nodes,
         };
 
         // Spawn all worker tasks.
         let (tx_primary, rx_primary) = channel(CHANNEL_CAPACITY);
         worker.handle_primary_messages();
         worker.handle_clients_transactions(tx_primary.clone());
-        worker.handle_workers_messages(tx_primary, worker.nodes);
+        worker.handle_workers_messages(tx_primary, worker._nodes);
 
         // The `PrimaryConnector` allows the worker to send messages to its primary.
         PrimaryConnector::spawn(
@@ -214,15 +207,15 @@ impl Worker {
         let (tx_helper, rx_helper) = channel(CHANNEL_CAPACITY);
         let (tx_processor, rx_processor) = channel(CHANNEL_CAPACITY);
 
-        let mut R: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
-        let mut x: Scalar = Scalar::one();
+        let mut r: Vec<RistrettoPoint> = vec![RistrettoPoint::identity(); RING_SIZE];
+        let mut _x: Scalar = Scalar::one();
 
         for i in 0..RING_SIZE {
             let (sk, pk) = KeyGen();
-            R[i] = pk;
+            r[i] = pk;
 
             if i == 0 {
-                x = sk;
+                _x = sk;
             }
         }
 
@@ -241,8 +234,8 @@ impl Worker {
             WorkerReceiverHandler {
                 tx_helper,
                 tx_processor,
-                nodes,
-                R,
+                _nodes: nodes,
+                r,
                 gens,
             },
         );
@@ -310,8 +303,8 @@ impl MessageHandler for TxReceiverHandler {
 struct WorkerReceiverHandler {
     tx_helper: Sender<(Vec<Digest>, PublicKey)>,
     tx_processor: Sender<SerializedBatchMessage>,
-    nodes: u64,
-    R: Vec<RistrettoPoint>,
+    _nodes: u64,
+    r: Vec<RistrettoPoint>,
     gens: PedersenGens,
 }
 
@@ -325,7 +318,7 @@ impl MessageHandler for WorkerReceiverHandler {
         match bincode::deserialize(&serialized) {
             Ok(WorkerMessage::Batch(block)) => { 
                 for tx in block.txs {
-                    Verify(&tx.signature, "msg", &self.R).unwrap();
+                    Verify(&tx.signature, "msg", &self.r).unwrap();
                     //sleep(Duration::from_millis(40));
                     check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &self.gens, &mut OsRng).unwrap();
                 }

@@ -1,11 +1,14 @@
 use core::{array::TryFromSliceError, fmt};
 
 use alloc::vec::Vec;
+use base64::{Engine, engine::{self, general_purpose}, alphabet};
 use mc_crypto_digestible::Digestible;
 use serde::{Serialize, Deserialize};
 
 /// Transaction hash length, in bytes.
 pub const TX_HASH_LEN: usize = 32;
+
+const CUSTOM_ENGINE: engine::GeneralPurpose = engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
 #[derive(
     Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Digestible,
@@ -33,13 +36,13 @@ impl TxHash {
 
 impl fmt::Debug for TxHash {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", base64::encode(&self.0))
+        write!(f, "{}", CUSTOM_ENGINE.encode(&self.0))
     }
 }
 
 impl fmt::Display for TxHash {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", base64::encode(&self.0).get(0..16).unwrap())
+        write!(f, "{}", CUSTOM_ENGINE.encode(&self.0).get(0..16).unwrap())
     }
 }
 

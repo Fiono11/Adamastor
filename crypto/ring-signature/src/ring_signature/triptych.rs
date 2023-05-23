@@ -112,7 +112,7 @@ impl TriptychSignature {
 	}
 
 	pub fn key_image(&self) -> KeyImage {
-		self.key_image()
+		self.key_image
 	}
 }
 
