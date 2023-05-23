@@ -147,25 +147,27 @@ class Bench:
     def _config(self, hosts_names, hosts, node_parameters, bench_parameters):
         Print.info('Generating configuration files...')
 
-        # Cleanup all local configuration files.
-        cmd = CommandMaker.cleanup()
-        subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
+        for host_name in hosts_names:
+            # Cleanup all local configuration files.
+            cmd = CommandMaker.cleanup()
+            self.manager.execute_command(host_name, cmd)
 
-        # Recompile the latest code.
-        cmd = CommandMaker.compile().split()
-        subprocess.run(cmd, check=True, cwd=PathMaker.node_crate_path())
+            # Recompile the latest code.
+            cmd = CommandMaker.compile()
+            self.manager.execute_command(host_name, cmd, check=True, cwd=PathMaker.node_crate_path())
 
-        # Create alias for the client and nodes binary.
-        cmd = CommandMaker.alias_binaries(PathMaker.binary_path())
-        subprocess.run([cmd], shell=True)
+            # Create alias for the client and nodes binary.
+            cmd = CommandMaker.alias_binaries(PathMaker.binary_path())
+            self.manager.execute_command(host_name, cmd)
+            #self.manager.execute_command(host_name, f'./node generate_keys --filename .node-0.json')
 
-        # Generate configuration files.
-        keys = []
-        key_files = [PathMaker.key_file(i) for i in range(len(hosts))]
-        for filename in key_files:
-            cmd = CommandMaker.generate_key(filename).split()
-            subprocess.run(cmd, check=True)
-            keys += [Key.from_file(filename)]
+            # Generate configuration files.
+            keys = []
+            key_files = [PathMaker.key_file(i) for i in range(len(hosts))]
+            for filename in key_files:
+                cmd = CommandMaker.generate_key(filename)
+                self.manager.execute_command(host_name, cmd, check=False)
+                keys += [Key.from_file(filename)]
 
         names = [x.name for x in keys]
 
@@ -179,7 +181,11 @@ class Bench:
                 (x, y) for x, y in zip(names, hosts)
             )
         committee = Committee(addresses, self.settings.base_port)
-        committee.print(PathMaker.committee_file())
+        cmd = CommandMaker.make_committee(committee, PathMaker.committee_file())
+        #committee.print(PathMaker.committee_file())
+
+        for host_name in hosts_names:
+            self.manager.execute_command(host_name, cmd)
 
         node_parameters.print(PathMaker.parameters_file())
 
@@ -258,16 +264,18 @@ class Bench:
         #self.kill(names, hosts=hosts, delete_logs=False)
 
     def _logs(self, names, committee, faults):
-        # Delete local logs (if any).
-        cmd = CommandMaker.clean_logs()
-        subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
+        for name in names:
+            # Delete local logs (if any).
+            cmd = CommandMaker.clean_logs()
+            self.manager.execute_command(name, cmd)
 
-        # Download log files.
-        workers_addresses = committee.workers_addresses(faults)
-        progress = progress_bar(workers_addresses, prefix='Downloading workers logs:')
-        for i, addresses in enumerate(progress):
-            for id, address in addresses:
-                for host in names:
+            # Download log files.
+            workers_addresses = committee.workers_addresses(faults)
+            progress = progress_bar(workers_addresses, prefix='Downloading workers logs:')
+            for i, addresses in enumerate(progress):
+                for id, address in addresses:
+                    #host = Committee.ip(address)
+                    host = names[i]
                     output = self.manager.execute_command(host, f'cat {PathMaker.client_log_file(i, id)}')
                     with open(PathMaker.client_log_file(i, id), 'w') as file:
                         file.write(output)
@@ -275,10 +283,11 @@ class Bench:
                     with open(PathMaker.worker_log_file(i, id), 'w') as file:
                         file.write(output)
 
-        primary_addresses = committee.primary_addresses(faults)
-        progress = progress_bar(primary_addresses, prefix='Downloading primaries logs:')
-        for i, address in enumerate(progress):
-            for host in names:
+            primary_addresses = committee.primary_addresses(faults)
+            progress = progress_bar(primary_addresses, prefix='Downloading primaries logs:')
+            for i, address in enumerate(progress):
+                #host = Committee.ip(address)
+                host = names[i]
                 output = self.manager.execute_command(host, f'cat {PathMaker.primary_log_file(i)}')
                 with open(PathMaker.primary_log_file(i), 'w') as file:
                     file.write(output)

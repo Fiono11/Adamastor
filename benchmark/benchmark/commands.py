@@ -1,6 +1,7 @@
 # Copyright(C) Facebook, Inc. and its affiliates.
+import json
 from os.path import join
-
+from json import dump
 from benchmark.utils import PathMaker
 
 
@@ -24,6 +25,18 @@ class CommandMaker:
     def generate_key(filename):
         assert isinstance(filename, str)
         return f'./node generate_keys --filename {filename}'
+    
+    @staticmethod
+    def download_workers_logs():
+        return f'cat {PathMaker.worker_log_file(0, 0)} > {PathMaker.worker_log_file(0, 0)}'
+
+    
+    @staticmethod
+    def make_committee(committee, filename):
+        assert isinstance(filename, str)
+        return f'echo \'{json.dumps(committee.json, indent=4, sort_keys=True)}\' > {filename}'
+        #with open(filename, 'w') as f:
+            #dump(committee.json, f, indent=4, sort_keys=True)
 
     @staticmethod
     def run_primary(keys, committee, store, parameters, debug=False):
