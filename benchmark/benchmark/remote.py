@@ -158,7 +158,7 @@ class Bench:
                 g = Connection(hosts[i][0], user=hosts[i][1], connect_kwargs={
                         "password": hosts[i][2],
                     })
-        g.run(' && '.join(cmd), hide=True)
+                g.run(' && '.join(cmd), hide=True)
 
     def _config(self, hosts, node_parameters, bench_parameters):
         Print.info('Generating configuration files...')
