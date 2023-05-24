@@ -60,11 +60,19 @@ class InstanceManager:
 
     def hosts(self):
         ssh_hosts = [host['host'] for host in self.settings.ssh_details]
-        return [self.settings.localhost] + ssh_hosts
+        ssh_users = [host['username'] for host in self.settings.ssh_details]
+        ssh_passwords = [host['password'] for host in self.settings.ssh_details]
+        
+        return [self.settings.localhost] + list(zip(ssh_hosts, ssh_users, ssh_passwords))
+    
+    '''def hosts(self):
+        ips = [host['host'] for host in self.settings.ssh_details]
+        return ips'''
+
     
     def names(self):
         ssh_names = [name['name'] for name in self.settings.ssh_details]
-        return [self.settings.localhost] + ssh_names
+        return ['localhost'] + ssh_names
 
     def print_info(self):
         for name, client in self.clients.items():

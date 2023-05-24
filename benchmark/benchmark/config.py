@@ -54,6 +54,7 @@ class Committee:
         assert all(
             isinstance(x, list) and len(x) > 1 for x in addresses.values()
         )
+        print("values: ", addresses.values())
         assert all(
             isinstance(x, str) for y in addresses.values() for x in y
         )
