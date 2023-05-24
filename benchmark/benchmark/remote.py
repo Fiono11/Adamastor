@@ -333,6 +333,12 @@ class Bench:
         return LogParser.process(PathMaker.logs_path(), faults=faults)
 
     def run(self, bench_parameters_dict, node_parameters_dict, debug=False):
+       # Check if tmux server is active
+        output = subprocess.run(['tmux', 'list-sessions'], capture_output=True, text=True)
+        if output.returncode == 0:
+            # tmux server is active, so kill it
+            subprocess.run(['tmux', 'kill-server'], check=True)
+
         assert isinstance(debug, bool)
         Print.heading('Starting remote benchmark')
         try:
