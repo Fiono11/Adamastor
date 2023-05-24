@@ -1,5 +1,7 @@
 # Copyright(C) Facebook, Inc. and its affiliates.
 from collections import OrderedDict
+import os
+import shutil
 from fabric import Connection, ThreadingGroup as Group
 from fabric.exceptions import GroupException
 from paramiko import RSAKey
@@ -92,11 +94,13 @@ class Bench:
         delete_logs = CommandMaker.clean_logs() if delete_logs else 'true'
         cmd = [delete_logs, f'({CommandMaker.kill()} || true)']
         try:
+            for i in range(len(hosts)):
+                if i > 0:
             #g = Group(*hosts, user='ubuntu', connect_kwargs=self.connect)
-            g = Connection('192.168.65.11', user='fiono', connect_kwargs={
-                        "password": "f122482848",
-                    })
-            g.run(' && '.join(cmd), hide=True)
+                    g = Connection(hosts[i][0], user=hosts[i][1], connect_kwargs={
+                                "password": hosts[i][2],
+                            })
+                    g.run(' && '.join(cmd), hide=True)
         except GroupException as e:
             raise BenchError('Failed to kill nodes', FabricError(e))
 
@@ -117,10 +121,18 @@ class Bench:
 
     def _background_run(self, host, command, log_file):
         name = splitext(basename(log_file))[0]
-        cmd = f'tmux new -d -s "{name}" "{command} |& tee {log_file}"'
-        c = Connection(host, user='ubuntu', connect_kwargs=self.connect)
-        output = c.run(cmd, hide=True)
-        self._check_stderr(output)
+        #c = Connection(host, user='ubuntu', connect_kwargs=self.connect)
+        if host == '192.168.0.250':
+            #name = splitext(basename(log_file))[0]
+            cmd = f'{command} 2> {log_file}'
+            subprocess.run(['tmux', 'new', '-d', '-s', name, cmd], check=True)
+        else:
+            cmd = f'tmux new -d -s "{name}" "{command} |& tee {log_file}"'
+            c = Connection(host[0], user=host[1], connect_kwargs={
+                            "password": host[2],
+                        })
+            output = c.run(cmd, hide=True)
+            self._check_stderr(output)
 
     def _update(self, hosts, collocate):
         #if collocate:
@@ -173,7 +185,6 @@ class Bench:
             keys += [Key.from_file(filename)]
 
         names = [x.name for x in keys]
-        print("names: ", names)
         
         addresses = OrderedDict()
 
@@ -183,13 +194,12 @@ class Bench:
             if i > 0:
                 h.append(hosts[i][0])
 
-        addresses[names[0]] = [hosts[0]] + h
+        addresses[names[0]] = [hosts[0]] + [hosts[0]] 
 
         for i in range(len(hosts)):
             if i > 0:
-                addresses[names[i]] = addresses[names[0]]  
+                addresses[names[i]] = [h[i-1]] + [h[i-1]]
             
-        print("addresses: ", addresses)
         committee = Committee(addresses, self.settings.base_port)
         committee.print(PathMaker.committee_file())
 
@@ -201,9 +211,9 @@ class Bench:
         for i, name in enumerate(progress):
             for ip in committee.ips(name):
                 #c = Connection(ip, user='ubuntu', connect_kwargs=self.connect)
-                if i > 0:
-                    c = Connection(ip[i][0], user=ip[i][1], connect_kwargs={
-                            "password": ip[i][2],
+                if i > 1:
+                    c = Connection(ip, user=hosts[i][1], connect_kwargs={
+                            "password": hosts[i][2],
                         })
                     c.run(f'{CommandMaker.cleanup()} || true', hide=True)
                     c.put(PathMaker.committee_file(), '.')
@@ -212,12 +222,13 @@ class Bench:
 
         return committee
 
-    def _run_single(self, rate, committee, bench_parameters, debug=False):
+    def _run_single(self, selected_hosts, rate, committee, bench_parameters, debug=False):
+        print("selected: ", selected_hosts)
         faults = bench_parameters.faults
 
         # Kill any potentially unfinished run and delete logs.
         hosts = committee.ips()
-        self.kill(hosts=hosts, delete_logs=True)
+        self.kill(hosts=selected_hosts, delete_logs=True)
 
         # Run the clients (they will wait for the nodes to be ready).
         # Filter all faulty nodes from the client addresses (or they will wait
@@ -227,7 +238,8 @@ class Bench:
         rate_share = ceil(rate / committee.workers())
         for i, addresses in enumerate(workers_addresses):
             for (id, address) in addresses:
-                host = Committee.ip(address)
+                #host = Committee.ip(address)
+                host = selected_hosts[i]
                 cmd = CommandMaker.run_client(
                     address,
                     bench_parameters.tx_size,
@@ -240,7 +252,8 @@ class Bench:
         # Run the primaries (except the faulty ones).
         Print.info('Booting primaries...')
         for i, address in enumerate(committee.primary_addresses(faults)):
-            host = Committee.ip(address)
+            #host = Committee.ip(address)
+            host = selected_hosts[i]
             cmd = CommandMaker.run_primary(
                 PathMaker.key_file(i),
                 PathMaker.committee_file(),
@@ -255,7 +268,8 @@ class Bench:
         Print.info('Booting workers...')
         for i, addresses in enumerate(workers_addresses):
             for (id, address) in addresses:
-                host = Committee.ip(address)
+                #host = Committee.ip(address)
+                host = selected_hosts[i]
                 cmd = CommandMaker.run_worker(
                     PathMaker.key_file(i),
                     PathMaker.committee_file(),
@@ -271,38 +285,47 @@ class Bench:
         duration = bench_parameters.duration
         for _ in progress_bar(range(20), prefix=f'Running benchmark ({duration} sec):'):
             sleep(ceil(duration / 20))
-        self.kill(hosts=hosts, delete_logs=False)
+        self.kill(hosts=selected_hosts, delete_logs=False)
 
-    def _logs(self, committee, faults):
+    def _logs(self, hosts, committee, faults):
         # Delete local logs (if any).
-        cmd = CommandMaker.clean_logs()
-        subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
+        #cmd = CommandMaker.clean_logs()
+        #subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
 
         # Download log files.
         workers_addresses = committee.workers_addresses(faults)
         progress = progress_bar(workers_addresses, prefix='Downloading workers logs:')
         for i, addresses in enumerate(progress):
             for id, address in addresses:
-                host = Committee.ip(address)
-                c = Connection(host, user='ubuntu', connect_kwargs=self.connect)
-                c.get(
-                    PathMaker.client_log_file(i, id), 
-                    local=PathMaker.client_log_file(i, id)
-                )
-                c.get(
-                    PathMaker.worker_log_file(i, id), 
-                    local=PathMaker.worker_log_file(i, id)
-                )
+                #host = Committee.ip(address)
+                host = hosts[i]
+                if host != '192.168.0.250':
+                    c = Connection(host[0], user=host[1], connect_kwargs={
+                            "password": host[2],
+                        })
+
+                    c.get(
+                        PathMaker.client_log_file(i, id), 
+                        local=PathMaker.client_log_file(i, id)
+                    )
+                    c.get(
+                        PathMaker.worker_log_file(i, id), 
+                        local=PathMaker.worker_log_file(i, id)
+                    )
 
         primary_addresses = committee.primary_addresses(faults)
         progress = progress_bar(primary_addresses, prefix='Downloading primaries logs:')
         for i, address in enumerate(progress):
-            host = Committee.ip(address)
-            c = Connection(host, user='ubuntu', connect_kwargs=self.connect)
-            c.get(
-                PathMaker.primary_log_file(i), 
-                local=PathMaker.primary_log_file(i)
-            )
+            #host = Committee.ip(address)
+            host = hosts[i]
+            if host != '192.168.0.250':
+                c = Connection(host[0], user=host[1], connect_kwargs={
+                        "password": host[2],
+                    })
+                c.get(
+                    PathMaker.primary_log_file(i), 
+                    local=PathMaker.primary_log_file(i)
+                )
 
         # Parse logs and return the parser.
         Print.info('Parsing logs and computing performance...')
@@ -340,7 +363,7 @@ class Bench:
             raise BenchError('Failed to configure nodes', e)
 
         # Run benchmarks.
-        '''for n in bench_parameters.nodes:
+        for n in bench_parameters.nodes:
             committee_copy = deepcopy(committee)
             committee_copy.remove_nodes(committee.size() - n)
 
@@ -352,11 +375,11 @@ class Bench:
                     Print.heading(f'Run {i+1}/{bench_parameters.runs}')
                     try:
                         self._run_single(
-                            r, committee_copy, bench_parameters, debug
+                            selected_hosts, r, committee_copy, bench_parameters, debug
                         )
 
                         faults = bench_parameters.faults
-                        logger = self._logs(committee_copy, faults)
+                        logger = self._logs(selected_hosts, committee_copy, faults)
                         logger.print(PathMaker.result_file(
                             faults,
                             n, 
@@ -370,7 +393,7 @@ class Bench:
                         if isinstance(e, GroupException):
                             e = FabricError(e)
                         Print.error(BenchError('Benchmark failed', e))
-                        continue'''
+                        continue
 
 
 
