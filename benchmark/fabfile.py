@@ -14,11 +14,11 @@ def local(ctx, debug=True):
     ''' Run benchmarks on localhost '''
     bench_params = {
         'faults': 0,
-        'nodes': [1],
+        'nodes': [2],
         'workers': 1,
         'rate': 500,
         'tx_size': 1833,
-        'duration': 1,
+        'duration': 20,
         'runs': 1,
     }
     node_params = {

@@ -56,33 +56,33 @@ class Bench:
     def install(self):
         Print.info('Installing rust and cloning the repo...')
         cmd = [
-            'sudo apt-get update',
-            'sudo apt-get -y upgrade',
-            'sudo apt-get -y autoremove',
+            #'sudo apt-get update',
+            #'sudo apt-get -y upgrade',
+            #'sudo apt-get -y autoremove',
 
             # The following dependencies prevent the error: [error: linker `cc` not found].
-            'sudo apt-get -y install build-essential',
-            'sudo apt-get -y install cmake',
+            #'sudo apt-get -y install build-essential',
+            #'sudo apt-get -y install cmake',
 
             # Install rust (non-interactive).
-            'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y',
-            'source $HOME/.cargo/env',
-            'rustup default stable',
+            #'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y',
+            #'source $HOME/.cargo/env',
+            #'rustup default nightly',
 
             # This is missing from the Rocksdb installer (needed for Rocksdb).
-            'sudo apt-get install -y clang',
+            #'sudo apt-get install -y clang',
 
             # Clone the repo.
             f'(git clone {self.settings.repo_url} || (cd {self.settings.repo_name} ; git pull))'
         ]
-        hosts = self.manager.hosts(flat=True)
+        hosts = self.manager.hosts()
         try:
-            #g = Group(*hosts, user='ubuntu', connect_kwargs=self.connect)
-            g = Connection('192.168.65.11', user='fiono', connect_kwargs={
-                        "password": "f122482848",
-                    })
-            g.run(' && '.join(cmd), hide=True)
-            Print.heading(f'Initialized testbed of {len(hosts)} nodes')
+            for i in range(len(hosts)):
+                if i > 0:
+                    g = Connection(hosts[i][0], user=hosts[i][1], connect_kwargs={
+                                "password": hosts[i][2],
+                            })
+                    g.run(' && '.join(cmd), hide=True)
         except (GroupException, ExecutionError) as e:
             e = FabricError(e) if isinstance(e, GroupException) else e
             raise BenchError('Failed to install repo on testbed', e)
@@ -90,7 +90,7 @@ class Bench:
     def kill(self, hosts=[], delete_logs=False):
         assert isinstance(hosts, list)
         assert isinstance(delete_logs, bool)
-        hosts = hosts if hosts else self.manager.hosts(flat=True)
+        #hosts = hosts if hosts else self.manager.hosts(flat=True)
         delete_logs = CommandMaker.clean_logs() if delete_logs else 'true'
         cmd = [delete_logs, f'({CommandMaker.kill()} || true)']
         try:
@@ -211,7 +211,8 @@ class Bench:
         for i, name in enumerate(progress):
             for ip in committee.ips(name):
                 #c = Connection(ip, user='ubuntu', connect_kwargs=self.connect)
-                if i > 1:
+                if i > 0:
+                    print("ip: ", ip)
                     c = Connection(ip, user=hosts[i][1], connect_kwargs={
                             "password": hosts[i][2],
                         })
