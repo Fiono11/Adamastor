@@ -200,6 +200,7 @@ class Bench:
         for i in range(len(hosts)):
             if i == len(hosts)-1:
                 addresses[names[i]] = ['192.168.0.250'] + ['192.168.0.250']
+                # addresses[names[i]] = [hosts[i]] + [hosts[i]]
             else:
                 addresses[names[i]] = [hosts[i][0]] + [hosts[i][0]]
 
