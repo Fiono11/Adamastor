@@ -173,6 +173,7 @@ impl Client {
             tokio::spawn(async move {
                 while TcpStream::connect(address).await.is_err() {
                     sleep(Duration::from_millis(10)).await;
+                    info!("Connecting to {:?}", address);
                 }
             })
         }))
