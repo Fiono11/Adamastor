@@ -187,17 +187,23 @@ class Bench:
         
         addresses = OrderedDict()
 
-        h = []
+        #h = []
+
+        #for i in range(len(hosts)):
+            #if i == len(hosts)-1:
+                #h.append(hosts[i][0])
+
+        #addresses[names[0]] = [hosts[0][0]] + [hosts[0][0]] 
+
+        #print("addresses: ", addresses)
 
         for i in range(len(hosts)):
-            if i < len(hosts)-1:
-                h.append(hosts[i][0])
+            if i == len(hosts)-1:
+                addresses[names[i]] = ['192.168.0.250'] + ['192.168.0.250']
+            else:
+                addresses[names[i]] = [hosts[i][0]] + [hosts[i][0]]
 
-        addresses[names[0]] = [hosts[0]] + [hosts[0]] 
-
-        for i in range(len(hosts)):
-            if i < len(hosts)-1:
-                addresses[names[i]] = [h[i-1]] + [h[i-1]]
+        print("addresses: ", addresses)
             
         committee = Committee(addresses, self.settings.base_port)
         committee.print(PathMaker.committee_file())
