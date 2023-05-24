@@ -145,7 +145,6 @@ impl Client {
                     };
     
                     tx.id = id.to_vec();
-                    info!("id: {:?}", tx.id);
                     let message = bincode::serialize(&tx.clone()).unwrap();
                     id.resize(size, 0u8);
                     //id.split();
