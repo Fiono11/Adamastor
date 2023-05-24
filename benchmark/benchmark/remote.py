@@ -78,7 +78,7 @@ class Bench:
         hosts = self.manager.hosts()
         try:
             for i in range(len(hosts)):
-                if i > 0:
+                if i < len(hosts)-1:
                     g = Connection(hosts[i][0], user=hosts[i][1], connect_kwargs={
                                 "password": hosts[i][2],
                             })
@@ -95,8 +95,7 @@ class Bench:
         cmd = [delete_logs, f'({CommandMaker.kill()} || true)']
         try:
             for i in range(len(hosts)):
-                if i > 0:
-            #g = Group(*hosts, user='ubuntu', connect_kwargs=self.connect)
+                if i < len(hosts)-1:
                     g = Connection(hosts[i][0], user=hosts[i][1], connect_kwargs={
                                 "password": hosts[i][2],
                             })
@@ -155,7 +154,7 @@ class Bench:
         ]
         #g = Group(*ips, user='ubuntu', connect_kwargs=self.connect)
         for i in range(len(hosts)):
-            if i > 0:
+            if i < len(hosts)-1:
                 g = Connection(hosts[i][0], user=hosts[i][1], connect_kwargs={
                         "password": hosts[i][2],
                     })
@@ -191,13 +190,13 @@ class Bench:
         h = []
 
         for i in range(len(hosts)):
-            if i > 0:
+            if i < len(hosts)-1:
                 h.append(hosts[i][0])
 
         addresses[names[0]] = [hosts[0]] + [hosts[0]] 
 
         for i in range(len(hosts)):
-            if i > 0:
+            if i < len(hosts)-1:
                 addresses[names[i]] = [h[i-1]] + [h[i-1]]
             
         committee = Committee(addresses, self.settings.base_port)
@@ -209,11 +208,10 @@ class Bench:
         names = names[:len(names)-bench_parameters.faults]
         progress = progress_bar(names, prefix='Uploading config files:')
         for i, name in enumerate(progress):
-            for ip in committee.ips(name):
+            #for ip in committee.ips(name):
                 #c = Connection(ip, user='ubuntu', connect_kwargs=self.connect)
-                if i > 0:
-                    print("ip: ", ip)
-                    c = Connection(ip, user=hosts[i][1], connect_kwargs={
+                if i < len(hosts)-1:
+                    c = Connection(hosts[i][0], user=hosts[i][1], connect_kwargs={
                             "password": hosts[i][2],
                         })
                     c.run(f'{CommandMaker.cleanup()} || true', hide=True)
