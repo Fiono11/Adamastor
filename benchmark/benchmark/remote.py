@@ -383,9 +383,6 @@ class Bench:
             e = FabricError(e) if isinstance(e, GroupException) else e
             raise BenchError('Failed to configure nodes', e)
         
-        for n in range(bench_parameters.nodes[0]):
-            print("N: ", n)
-
         # Run benchmarks.
         for n in range(bench_parameters.nodes[0]):
             committee_copy = deepcopy(committee)
@@ -401,16 +398,6 @@ class Bench:
                         self._run_single(
                             selected_hosts, n, r, committee_copy, bench_parameters, debug
                         )
-                        faults = bench_parameters.faults
-                        logger = self._logs(selected_hosts, n, committee_copy, faults)
-                        '''logger.print(PathMaker.result_file(
-                            faults,
-                            n, 
-                            bench_parameters.workers,
-                            bench_parameters.collocate,
-                            r, 
-                            bench_parameters.tx_size, 
-                        ))'''
                     except (subprocess.SubprocessError, GroupException, ParseError) as e:
                         self.kill(hosts=selected_hosts)
                         if isinstance(e, GroupException):
@@ -419,8 +406,22 @@ class Bench:
                             continue
 
         duration = bench_parameters.duration
-        for _ in progress_bar(range(20), prefix=f'Running benchmark ({duration} sec):'):
-            sleep(ceil(duration / 20))
+        print('Running benchmark for', duration, 'seconds')
+        #for _ in progress_bar(range(20), prefix=f'Running benchmark ({duration} sec):'):
+        sleep(duration)
+        print("!!!!")
+        for n in range(bench_parameters.nodes[0]):
+            faults = bench_parameters.faults
+            logger = self._logs(selected_hosts, n, committee_copy, faults)
+            '''logger.print(PathMaker.result_file(
+                faults,
+                n, 
+                bench_parameters.workers,
+                bench_parameters.collocate,
+                r, 
+                bench_parameters.tx_size, 
+            ))'''
+
         self.kill(hosts=selected_hosts, delete_logs=False)
 
         
