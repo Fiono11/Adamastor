@@ -169,10 +169,11 @@ impl Client {
     pub async fn wait(&self) {
         // Wait for all nodes to be online.
         info!("Waiting for all nodes to be online...");
+        info!("nodes: {:?}", self.nodes);
         join_all(self.nodes.iter().rev().cloned().map(|address| {
             tokio::spawn(async move {
                 while TcpStream::connect(address).await.is_err() {
-                    sleep(Duration::from_millis(100)).await;
+                    sleep(Duration::from_millis(10)).await;
                     info!("Connecting to {:?}", address);
                 }
             })

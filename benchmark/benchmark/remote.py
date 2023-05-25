@@ -231,7 +231,7 @@ class Bench:
 
         return committee
 
-    def _run_single(self, selected_hosts, rate, committee, bench_parameters, debug=False):
+    def _run_single(self, selected_hosts, n, rate, committee, bench_parameters, debug=False):
         print("selected: ", selected_hosts)
         faults = bench_parameters.faults
 
@@ -244,59 +244,65 @@ class Bench:
         # for the faulty nodes to be online).
         Print.info('Booting clients...')
         workers_addresses = committee.workers_addresses(faults)
+        print("workers: ", workers_addresses)
+        print("n: ", n)
+        print("workers: ", workers_addresses[n])
         rate_share = ceil(rate / committee.workers())
-        for i, addresses in enumerate(workers_addresses):
-            for (id, address) in addresses:
+        for (id, address) in workers_addresses[n]:
+            #for (id, address) in addresses:
                 #host = Committee.ip(address)
-                host = selected_hosts[i]
+                host = selected_hosts[n]
+                print("address: ", address)
                 cmd = CommandMaker.run_client(
                     address,
                     bench_parameters.tx_size,
                     rate_share,
-                    [x for y in workers_addresses for _, x in y]
+                    [workers_addresses[n][0][1]]
                 )
-                log_file = PathMaker.client_log_file(i, id)
+                log_file = PathMaker.client_log_file(n, id)
                 self._background_run(host, cmd, log_file)
+
+        print("primary: ", committee.primary_addresses(faults))
 
         # Run the primaries (except the faulty ones).
         Print.info('Booting primaries...')
-        for i, address in enumerate(committee.primary_addresses(faults)):
+        #for address in committee.primary_addresses(faults)[n]:
             #host = Committee.ip(address)
-            host = selected_hosts[i]
-            cmd = CommandMaker.run_primary(
-                PathMaker.key_file(i),
-                PathMaker.committee_file(),
-                PathMaker.db_path(i),
-                PathMaker.parameters_file(),
-                debug=debug
-            )
-            log_file = PathMaker.primary_log_file(i)
-            self._background_run(host, cmd, log_file)
+        host = selected_hosts[n]
+        cmd = CommandMaker.run_primary(
+            PathMaker.key_file(n),
+            PathMaker.committee_file(),
+            PathMaker.db_path(n),
+            PathMaker.parameters_file(),
+            debug=debug
+        )
+        log_file = PathMaker.primary_log_file(n)
+        self._background_run(host, cmd, log_file)
 
         # Run the workers (except the faulty ones).
         Print.info('Booting workers...')
-        for i, addresses in enumerate(workers_addresses):
-            for (id, address) in addresses:
+        for (id, address) in workers_addresses[n]:
+            #for (id, address) in addresses:
                 #host = Committee.ip(address)
-                host = selected_hosts[i]
+                host = selected_hosts[n]
                 cmd = CommandMaker.run_worker(
-                    PathMaker.key_file(i),
+                    PathMaker.key_file(n),
                     PathMaker.committee_file(),
-                    PathMaker.db_path(i, id),
+                    PathMaker.db_path(n, id),
                     PathMaker.parameters_file(),
                     id,  # The worker's id.
                     debug=debug
                 )
-                log_file = PathMaker.worker_log_file(i, id)
+                log_file = PathMaker.worker_log_file(n, id)
                 self._background_run(host, cmd, log_file)
 
         # Wait for all transactions to be processed.
-        duration = bench_parameters.duration
-        for _ in progress_bar(range(20), prefix=f'Running benchmark ({duration} sec):'):
-            sleep(ceil(duration / 20))
-        self.kill(hosts=selected_hosts, delete_logs=False)
+        #duration = bench_parameters.duration
+        #for _ in progress_bar(range(20), prefix=f'Running benchmark ({duration} sec):'):
+            #sleep(ceil(duration / 20))
+        #self.kill(hosts=selected_hosts, delete_logs=False)
 
-    def _logs(self, hosts, committee, faults):
+    def _logs(self, hosts, n, committee, faults):
         # Delete local logs (if any).
         #cmd = CommandMaker.clean_logs()
         #subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
@@ -304,22 +310,22 @@ class Bench:
         # Download log files.
         workers_addresses = committee.workers_addresses(faults)
         progress = progress_bar(workers_addresses, prefix='Downloading workers logs:')
-        for i, addresses in enumerate(progress):
-            for id, address in addresses:
+        for (id, address) in workers_addresses[n]:
+            #for id, address in addresses:
                 #host = Committee.ip(address)
-                host = hosts[i]
+                host = hosts[n]
                 if host != '192.168.0.250':
                     c = Connection(host[0], user=host[1], connect_kwargs={
                             "password": host[2],
                         })
 
                     c.get(
-                        PathMaker.client_log_file(i, id), 
-                        local=PathMaker.client_log_file(i, id)
+                        PathMaker.client_log_file(n, id), 
+                        local=PathMaker.client_log_file(n, id)
                     )
                     c.get(
-                        PathMaker.worker_log_file(i, id), 
-                        local=PathMaker.worker_log_file(i, id)
+                        PathMaker.worker_log_file(n, id), 
+                        local=PathMaker.worker_log_file(n, id)
                     )
 
         primary_addresses = committee.primary_addresses(faults)
@@ -376,11 +382,14 @@ class Bench:
         except (subprocess.SubprocessError, GroupException) as e:
             e = FabricError(e) if isinstance(e, GroupException) else e
             raise BenchError('Failed to configure nodes', e)
+        
+        for n in range(bench_parameters.nodes[0]):
+            print("N: ", n)
 
         # Run benchmarks.
-        for n in bench_parameters.nodes:
+        for n in range(bench_parameters.nodes[0]):
             committee_copy = deepcopy(committee)
-            committee_copy.remove_nodes(committee.size() - n)
+            #committee_copy.remove_nodes(committee.size() - n)
 
             for r in bench_parameters.rate:
                 Print.heading(f'\nRunning {n} nodes (input rate: {r:,} tx/s)')
@@ -390,11 +399,10 @@ class Bench:
                     Print.heading(f'Run {i+1}/{bench_parameters.runs}')
                     try:
                         self._run_single(
-                            selected_hosts, r, committee_copy, bench_parameters, debug
+                            selected_hosts, n, r, committee_copy, bench_parameters, debug
                         )
-
                         faults = bench_parameters.faults
-                        logger = self._logs(selected_hosts, committee_copy, faults)
+                        logger = self._logs(selected_hosts, n, committee_copy, faults)
                         '''logger.print(PathMaker.result_file(
                             faults,
                             n, 
@@ -407,8 +415,15 @@ class Bench:
                         self.kill(hosts=selected_hosts)
                         if isinstance(e, GroupException):
                             e = FabricError(e)
-                        Print.error(BenchError('Benchmark failed', e))
-                        continue
+                            Print.error(BenchError('Benchmark failed', e))
+                            continue
+
+        duration = bench_parameters.duration
+        for _ in progress_bar(range(20), prefix=f'Running benchmark ({duration} sec):'):
+            sleep(ceil(duration / 20))
+        self.kill(hosts=selected_hosts, delete_logs=False)
+
+        
 
 
 
