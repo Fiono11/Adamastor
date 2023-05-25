@@ -256,7 +256,7 @@ class Bench:
                 self._background_run(host, cmd, log_file)
 
         # Run the primaries (except the faulty ones).
-        Print.info('Booting primaries...')
+        '''Print.info('Booting primaries...')
         for i, address in enumerate(committee.primary_addresses(faults)):
             #host = Committee.ip(address)
             host = selected_hosts[i]
@@ -285,7 +285,7 @@ class Bench:
                     debug=debug
                 )
                 log_file = PathMaker.worker_log_file(i, id)
-                self._background_run(host, cmd, log_file)
+                self._background_run(host, cmd, log_file)'''
 
         # Wait for all transactions to be processed.
         duration = bench_parameters.duration
@@ -295,8 +295,8 @@ class Bench:
 
     def _logs(self, hosts, committee, faults):
         # Delete local logs (if any).
-        #cmd = CommandMaker.clean_logs()
-        #subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
+        cmd = CommandMaker.clean_logs()
+        subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
 
         # Download log files.
         workers_addresses = committee.workers_addresses(faults)
