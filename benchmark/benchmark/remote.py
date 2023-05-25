@@ -279,15 +279,11 @@ class Bench:
                 print("address1: ", address)
                 ip = Committee.ip(address)
                 print("w: ", [x for y in workers_addresses for _, x in y])
-                if i == 0:
-                    a = [x for y in workers_addresses for _, x in y][1]
-                else:
-                    a = [x for y in workers_addresses for _, x in y][0]
                 cmd = CommandMaker.run_client(
                     address,
                     bench_parameters.tx_size,
                     rate_share,
-                    [a]
+                    [x for y in workers_addresses for _, x in y]
                 )
                 log_file = PathMaker.client_log_file(i, id)
                 self._background_run(ip, hosts[i], cmd, log_file)
