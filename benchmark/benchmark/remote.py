@@ -1,5 +1,6 @@
 # Copyright(C) Facebook, Inc. and its affiliates.
 from collections import OrderedDict
+import datetime
 import os
 import shutil
 from fabric import Connection, ThreadingGroup as Group
@@ -91,7 +92,7 @@ class Bench:
         assert isinstance(hosts, list)
         assert isinstance(delete_logs, bool)
         #hosts = hosts if hosts else self.manager.hosts(flat=True)
-        delete_logs = CommandMaker.clean_logs() if delete_logs else 'true'
+        '''delete_logs = CommandMaker.clean_logs() if delete_logs else 'true'
         cmd = [delete_logs, f'({CommandMaker.kill()} || true)']
         try:
             for i in range(len(hosts)):
@@ -101,7 +102,7 @@ class Bench:
                             })
                     g.run(' && '.join(cmd), hide=True)
         except GroupException as e:
-            raise BenchError('Failed to kill nodes', FabricError(e))
+            raise BenchError('Failed to kill nodes', FabricError(e))'''
 
     def _select_hosts(self, bench_parameters):
         # Collocate the primary and its workers on the same machine.
@@ -124,9 +125,11 @@ class Bench:
         if host == '192.168.0.250':
             #name = splitext(basename(log_file))[0]
             cmd = f'{command} 2> {log_file}'
+            print("running command: ", cmd, " at ", datetime.datetime.now())
             subprocess.run(['tmux', 'new', '-d', '-s', name, cmd], check=True)
         else:
             cmd = f'tmux new -d -s "{name}" "{command} |& tee {log_file}"'
+            print("running command: ", cmd, " at ", datetime.datetime.now())
             c = Connection(host[0], user=host[1], connect_kwargs={
                             "password": host[2],
                         })
@@ -221,7 +224,7 @@ class Bench:
                     c = Connection(hosts[i][0], user=hosts[i][1], connect_kwargs={
                             "password": hosts[i][2],
                         })
-                    c.run(f'{CommandMaker.cleanup()} || true', hide=True)
+                    #c.run(f'{CommandMaker.cleanup()} || true', hide=True)
                     c.put(PathMaker.committee_file(), '.')
                     c.put(PathMaker.key_file(i), '.')
                     c.put(PathMaker.parameters_file(), '.')
@@ -234,7 +237,7 @@ class Bench:
 
         # Kill any potentially unfinished run and delete logs.
         hosts = committee.ips()
-        self.kill(hosts=selected_hosts, delete_logs=True)
+        self.kill(hosts=selected_hosts, delete_logs=False)
 
         # Run the clients (they will wait for the nodes to be ready).
         # Filter all faulty nodes from the client addresses (or they will wait
@@ -256,7 +259,7 @@ class Bench:
                 self._background_run(host, cmd, log_file)
 
         # Run the primaries (except the faulty ones).
-        '''Print.info('Booting primaries...')
+        Print.info('Booting primaries...')
         for i, address in enumerate(committee.primary_addresses(faults)):
             #host = Committee.ip(address)
             host = selected_hosts[i]
@@ -285,7 +288,7 @@ class Bench:
                     debug=debug
                 )
                 log_file = PathMaker.worker_log_file(i, id)
-                self._background_run(host, cmd, log_file)'''
+                self._background_run(host, cmd, log_file)
 
         # Wait for all transactions to be processed.
         duration = bench_parameters.duration
@@ -295,8 +298,8 @@ class Bench:
 
     def _logs(self, hosts, committee, faults):
         # Delete local logs (if any).
-        cmd = CommandMaker.clean_logs()
-        subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
+        #cmd = CommandMaker.clean_logs()
+        #subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
 
         # Download log files.
         workers_addresses = committee.workers_addresses(faults)
@@ -335,7 +338,7 @@ class Bench:
 
         # Parse logs and return the parser.
         Print.info('Parsing logs and computing performance...')
-        return LogParser.process(PathMaker.logs_path(), faults=faults)
+        #return LogParser.process(PathMaker.logs_path(), faults=faults)
 
     def run(self, bench_parameters_dict, node_parameters_dict, debug=False):
        # Check if tmux server is active
@@ -392,14 +395,14 @@ class Bench:
 
                         faults = bench_parameters.faults
                         logger = self._logs(selected_hosts, committee_copy, faults)
-                        logger.print(PathMaker.result_file(
+                        '''logger.print(PathMaker.result_file(
                             faults,
                             n, 
                             bench_parameters.workers,
                             bench_parameters.collocate,
                             r, 
                             bench_parameters.tx_size, 
-                        ))
+                        ))'''
                     except (subprocess.SubprocessError, GroupException, ParseError) as e:
                         self.kill(hosts=selected_hosts)
                         if isinstance(e, GroupException):

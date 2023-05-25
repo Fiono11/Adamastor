@@ -172,7 +172,7 @@ impl Client {
         join_all(self.nodes.iter().rev().cloned().map(|address| {
             tokio::spawn(async move {
                 while TcpStream::connect(address).await.is_err() {
-                    sleep(Duration::from_millis(10)).await;
+                    sleep(Duration::from_millis(100)).await;
                     info!("Connecting to {:?}", address);
                 }
             })
