@@ -115,7 +115,7 @@ impl Primary {
             .primary(&PK(name.to_bytes()))
             .expect("Our public key or worker id is not in the committee")
             .worker_to_primary;
-        address.set_ip("0.0.0.0".parse().unwrap());
+        //address.set_ip("0.0.0.0".parse().unwrap());
         NetworkReceiver::spawn(
             address,
             /* handler */
