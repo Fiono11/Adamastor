@@ -147,9 +147,8 @@ impl Client {
                     tx.id = id.to_vec();
                     let message = bincode::serialize(&tx.clone()).unwrap();
                     id.resize(size, 0u8);
-                    //id.split();
+                    id.split();
 
-                    //info!("Sending transaction {}", tx.tx_hash());
                     let bytes = Bytes::from(message);
                     if let Err(e) = transport.send(bytes).await {
                         warn!("Failed to send transaction: {}", e);
@@ -174,6 +173,7 @@ impl Client {
                 while TcpStream::connect(address).await.is_err() {
                     sleep(Duration::from_millis(10)).await;
                 }
+                info!("Successfully connected to {}", address); 
             })
         }))
         .await;

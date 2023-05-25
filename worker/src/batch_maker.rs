@@ -4,17 +4,13 @@ use crate::quorum_waiter::QuorumWaiterMessage;
 use crate::worker::WorkerMessage;
 
 use bytes::Bytes;
+use log::info;
 #[cfg(feature = "benchmark")]
 use mc_crypto_keys::tx_hash::TxHash as Digest;
 use mc_account_keys::{PublicAddress as PublicKey};
 
-
 #[cfg(feature = "benchmark")]
 use ed25519_dalek::{Digest as _, Sha512};
-#[cfg(feature = "benchmark")]
-use log::info;
-
-
 
 use mc_transaction_core::tx::Transaction;
 use network::ReliableSender;

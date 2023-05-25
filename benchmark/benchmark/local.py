@@ -79,6 +79,7 @@ class LocalBench:
 
                 # Run the clients (they will wait for the nodes to be ready).
                 workers_addresses = committee.workers_addresses(self.faults)
+                print("workers: ", workers_addresses)
                 rate_share = ceil(rate / committee.workers())
                 for i, addresses in enumerate(workers_addresses):
                     for (id, address) in addresses:
