@@ -94,6 +94,11 @@ class Ploter:
                 linestyle='dotted', marker=next(markers), capsize=3
             )
 
+            tx_sizes = [16, 32, 64, 128, 256, 512, 1024]
+
+            for i, (x, y) in enumerate(zip(x_values, y_values)):
+                plt.annotate(tx_sizes[i], (x, y))
+
         plt.legend(loc='lower center', bbox_to_anchor=(0.5, 1), ncol=3)
         plt.xlim(xmin=0)
         plt.ylim(bottom=0)
@@ -200,4 +205,4 @@ class Ploter:
                 )
 
         cls.plot_latency(latency_files, params.scalability())
-        cls.plot_tps(tps_files, params.scalability())
+        #cls.plot_tps(tps_files, params.scalability())
