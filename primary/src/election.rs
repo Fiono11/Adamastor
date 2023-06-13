@@ -165,7 +165,7 @@ impl Tally {
     }
 }
 
-pub const ROUND_TIMER: usize = 0;
+pub const ROUND_TIMER: usize = 10;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Timer {

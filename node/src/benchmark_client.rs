@@ -117,6 +117,7 @@ impl Client {
         let mut tx = Transaction::new();
         tx.data = data;
         let mut counter = 0;
+        let mut counter2 = 0;
         let mut r: u64 = thread_rng().gen();
         let mut r2: u32 = thread_rng().gen();
         //let mut r: u64 = 0;
@@ -127,8 +128,8 @@ impl Client {
         // NOTE: This log entry is used to compute performance.
         info!("Start sending transactions");
 
-        'main: loop {
-        //for _ in 0..100 {
+        //'main: loop {
+        for _ in 0..10 {
             interval.as_mut().tick().await;
             let now = Instant::now();
 
@@ -163,6 +164,7 @@ impl Client {
                     warn!("Failed to send transaction: {}", e);
                     //break 'main;
                 }
+                counter2 += 1;
             }
             if now.elapsed().as_millis() > BURST_DURATION as u128 {
                 // NOTE: This log entry is used to compute performance.
@@ -170,6 +172,7 @@ impl Client {
             }
             counter += 1;
         }
+        info!("Sent {} txs", counter2);
         Ok(())
     }
 

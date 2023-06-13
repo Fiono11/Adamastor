@@ -77,7 +77,7 @@ impl SimpleSender {
         let duration = Duration::from_millis(duration_ms);
 
         // Sleep for the random duration
-        //thread::sleep(duration);
+        thread::sleep(duration);
 
         //info!("Broadcast in {} ms", duration_ms);
         

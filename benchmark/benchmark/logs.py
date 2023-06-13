@@ -164,10 +164,6 @@ class LogParser:
         start, end = min(self.proposals.values()), max(self.commits.values())
         duration = end - start
         bytes = sum(self.sizes.values())
-        #print("proposals: ", self.proposals)
-        #print("commits: ", self.commits)
-        print("bytes: ", bytes)
-        print("duration: ", duration)
         bps = bytes / duration
         tps = bps / self.size[0]
         return tps, bps, duration
@@ -188,6 +184,9 @@ class LogParser:
 
     def _end_to_end_latency(self):
         latency = []
+        #print("sent: ", self.sent_samples)
+        #print("received: ", self.received_samples)
+        count = 0
         for sent, received in zip(self.sent_samples, self.received_samples):
             for tx_id, batch_id in received.items():
                 if batch_id in self.commits:
@@ -195,6 +194,8 @@ class LogParser:
                     start = sent[tx_id]
                     end = self.commits[batch_id]
                     latency += [end-start]
+                    count += 1
+        print("count: ", count)
         return mean(latency) if latency else 0
 
     def result(self):

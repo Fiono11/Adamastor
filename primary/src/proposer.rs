@@ -91,10 +91,10 @@ impl Proposer {
         .await;
         //debug!("Created {:?}", header);
         
-        #[cfg(feature = "benchmark")]
+        //#[cfg(feature = "benchmark")]
         //for digest in &header.payload {
             // NOTE: This log entry is used to compute performance.
-            info!("Created {} -> {:?}", &header, election_id);
+            //info!("Created {} -> {:?}", &header, election_id);
         //}
 
         // Send the new header to the `Core` that will broadcast and process it.
