@@ -31,6 +31,7 @@ impl Election {
 
     pub fn insert_vote(&mut self, vote: &Vote, author: PublicAddress) {
         let tx_hash = vote.tx_hash.clone();
+        let round = vote.consensus_round;
         if !vote.commit {
             if let Some(highest) = self.highest.clone() {
                 if tx_hash > highest {
@@ -39,6 +40,15 @@ impl Election {
             }
             else {
                 self.highest = Some(tx_hash.clone());
+            }
+
+            if let Some(hr) = self.highest_round {
+                if round > hr {
+                    self.highest_round = Some(round);
+                }
+            }
+            else {
+                self.highest_round = Some(round);
             }
         }
 
