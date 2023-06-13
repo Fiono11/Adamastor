@@ -7,14 +7,12 @@ pub type ElectionId = Digest;
 
 #[derive(Debug, Clone)]
 pub struct Election {
-    //pub round: Round,
     pub tallies: HashMap<Round, Tally>,
     pub decided: bool,
     pub commit: Option<Digest>,
     pub highest: Option<Digest>,
     pub proof_round: Option<Round>,
-    //pub voted: bool,
-    //pub committed: bool,
+    pub highest_round: Option<Round>,
 }
 
 impl Election {
@@ -22,14 +20,12 @@ impl Election {
         let mut tallies = HashMap::new();
         tallies.insert(0, Tally::new());
         Self {
-            //round: 0,
             tallies,
             decided: false,
             commit: None,
             highest: None,
             proof_round: None,
-            //voted: false,
-            //committed: false,
+            highest_round: None,
         }
     }
 
@@ -46,14 +42,14 @@ impl Election {
             }
         }
 
-        match self.tallies.get_mut(&vote.round) {
+        match self.tallies.get_mut(&vote.election_round) {
             Some(tally) => {
-                tally.insert_to_tally(tx_hash, author, vote.commit);
+                tally.insert_to_tally(tx_hash, author, vote.commit, vote.consensus_round);
             }
             None => {
                 let mut tally = Tally::new();
-                Tally::insert_to_tally(&mut tally, tx_hash.clone(), author, vote.commit);
-                self.tallies.insert(vote.round, tally);
+                Tally::insert_to_tally(&mut tally, tx_hash.clone(), author, vote.commit, vote.consensus_round);
+                self.tallies.insert(vote.election_round, tally);
             }
         }
     }
@@ -75,8 +71,8 @@ impl Election {
 
 #[derive(Debug, Clone)]
 pub struct Tally {
-    pub votes: HashMap<TxHash, BTreeSet<PublicAddress>>,
-    pub commits: HashMap<TxHash, BTreeSet<PublicAddress>>,
+    pub votes: HashMap<(TxHash, Round), BTreeSet<PublicAddress>>,
+    pub commits: HashMap<(TxHash, Round), BTreeSet<PublicAddress>>,
     pub timer: Arc<(Mutex<Timer>, Condvar)>,
 }
 
@@ -100,19 +96,19 @@ impl Tally {
         }
     }
 
-    pub fn find_quorum_of_votes(&self) -> Option<&TxHash> {
-        for (tx_hash, vote_set) in &self.votes {
+    pub fn find_quorum_of_votes(&self) -> Option<(&TxHash, &Round)> {
+        for ((tx_hash, round), vote_set) in &self.votes {
             if vote_set.len() >= QUORUM {
-                return Some(tx_hash);
+                return Some((tx_hash, round));
             }
         }
         None
     }
 
-    pub fn find_quorum_of_commits(&self) -> Option<&TxHash> {
-        for (tx_hash, commit_set) in &self.commits {
+    pub fn find_quorum_of_commits(&self) -> Option<(&TxHash, &Round)> {
+        for ((tx_hash, round), commit_set) in &self.commits {
             if commit_set.len() >= QUORUM {
-                return Some(tx_hash);
+                return Some((tx_hash, round));
             }
         }
         None
@@ -122,16 +118,16 @@ impl Tally {
         self.votes.values().map(|vote_set| vote_set.len()).sum()
     }
 
-    fn insert_to_tally(&mut self, tx_hash: Digest, author: PublicAddress, is_commit: bool) {
+    fn insert_to_tally(&mut self, tx_hash: Digest, author: PublicAddress, is_commit: bool, round: Round) {
         let target = if is_commit { &mut self.commits } else { &mut self.votes };
-        match target.get_mut(&tx_hash) {
+        match target.get_mut(&(tx_hash.clone(), round)) {
             Some(btreeset) => {
                 btreeset.insert(author);
             }
             None => {
                 let mut btreeset = BTreeSet::new();
                 btreeset.insert(author);
-                target.insert(tx_hash, btreeset);
+                target.insert((tx_hash, round), btreeset);
             }
         }
     }

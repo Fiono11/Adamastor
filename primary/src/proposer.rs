@@ -39,6 +39,7 @@ pub struct Proposer {
     /// Keeps track of the size (in bytes) of batches' digests that we received so far.
     payload_size: usize,
     votes: Vec<Vote>,
+    consensus_round: Round,
 }
 
 impl Proposer {
@@ -66,6 +67,7 @@ impl Proposer {
                 digests: Vec::with_capacity(2 * header_size),
                 payload_size: 0,
                 votes: Vec::with_capacity(header_size),
+                consensus_round: 0,
             }
             .run()
             .await;
@@ -127,7 +129,7 @@ impl Proposer {
 
             tokio::select! {
                 Some((tx_hash, election_id)) = self.rx_workers.recv() => {
-                    let vote = Vote::new(0, tx_hash, election_id, false).await;
+                    let vote = Vote::new(0, tx_hash, election_id, false, self.consensus_round).await;
                     self.votes.push(vote);
                     //self.make_header(tx_hash, election_id).await;
                     //info!("Received digest {:?}", digest);
@@ -138,6 +140,7 @@ impl Proposer {
                     //info!("Digests: {:?}", self.digests);
                 }
                 () = &mut timer => {
+                    self.consensus_round += 1;
                     // Nothing to do.
                 }
             }

@@ -104,10 +104,11 @@ impl fmt::Display for Header {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Vote {
-    pub round: Round,
+    pub election_round: Round,
     pub tx_hash: TxHash,
     pub election_id: ElectionId,
     pub commit: bool,
+    pub consensus_round: Round,
 }
 
 impl Vote {
@@ -116,9 +117,10 @@ impl Vote {
         tx_hash: TxHash,
         election_id: ElectionId,
         commit: bool,
+        consensus_round: Round,
     ) -> Self {
         Self {
-            round, tx_hash, election_id, commit,
+            election_round: round, tx_hash, election_id, commit, consensus_round,
         }
     }
 }
@@ -126,7 +128,7 @@ impl Vote {
 impl Hash for Vote {
     fn digest(&self) -> TxHash {
         let mut hasher = Sha512::new();
-        hasher.update(self.round.to_le_bytes());
+        hasher.update(self.election_round.to_le_bytes());
         hasher.update(&self.tx_hash);
         hasher.update(&self.election_id);
         Digest(hasher.finalize().as_slice()[..32].try_into().unwrap())
@@ -139,7 +141,7 @@ impl fmt::Debug for Vote {
             f,
             "{}: V{}({}, {})",
             self.digest(),
-            self.round,
+            self.election_round,
             self.tx_hash,
             self.election_id,
         )
@@ -148,7 +150,7 @@ impl fmt::Debug for Vote {
 
 impl fmt::Display for Vote {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "B{}({})", self.round, self.digest())
+        write!(f, "B{}({})", self.election_round, self.digest())
     }
 }
 

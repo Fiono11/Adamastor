@@ -169,7 +169,7 @@ impl Core {
                 // decide vote
                 let election = self.elections.get_mut(&election_id).unwrap();
                 //match election.tallies.get(&header.round) {
-                    if let Some(tally) = election.tallies.get(&vote.round) {
+                    if let Some(tally) = election.tallies.get(&vote.election_round) {
                         if let Some(tx_hash) = tally.find_quorum_of_commits() {
                             if !election.decided {
                                 #[cfg(not(feature = "benchmark"))]
@@ -184,11 +184,15 @@ impl Core {
                         }
                         //if !election.committed {
                             //own_header = header.clone();
-                            if let Some(tx_hash) = tally.find_quorum_of_votes() {
-                                if !election.voted_or_committed(&self.name, vote.round+1) {
+                            if let Some((tx_hash, round)) = tally.find_quorum_of_votes() {
+                                if !election.voted_or_committed(&self.name, vote.election_round+1) {
+                                    /*let mut consensus_round = round;
+                                    if let Some(hr) = election.highest_round {
+                                        consensus_round = hr;
+                                    }*/
                                     election.commit = Some(tx_hash.clone());
-                                    election.proof_round = Some(vote.round);
-                                    let vote = Vote::new(vote.round + 1, tx_hash.clone(), election_id, true).await;
+                                    election.proof_round = Some(vote.election_round);
+                                    let vote = Vote::new(vote.election_round + 1, tx_hash.clone(), election_id, true, *round).await;
                                     election.insert_vote(&vote, self.name);
 
                                     self.votes.push(vote);
@@ -210,13 +214,17 @@ impl Core {
                                     //info!("Sending commit: {:?}", own_header);
                                 }
                             }
-                            else if election.voted_or_committed(&self.name, vote.round) && ((tally.total_votes() >= QUORUM && *tally.timer.0.lock().unwrap() == Timer::Expired) || tally.total_votes() == NUMBER_OF_NODES)
-                            && !election.voted_or_committed(&self.name, vote.round + 1) {
+                            else if election.voted_or_committed(&self.name, vote.election_round) && ((tally.total_votes() >= QUORUM && *tally.timer.0.lock().unwrap() == Timer::Expired) || tally.total_votes() == NUMBER_OF_NODES)
+                            && !election.voted_or_committed(&self.name, vote.election_round + 1) {
                                 let highest = election.highest.clone().unwrap();
+                                let mut consensus_round = vote.consensus_round;
+                                if let Some(hr) = election.highest_round {
+                                    consensus_round = hr;
+                                }
                                 //own_header.payload = (highest.clone(), election_id.clone());
                                 //own_header.round = header.round + 1;
                                 //own_header.author = self.name;
-                                let vote = Vote::new(vote.round+1, highest, election_id, false).await;
+                                let vote = Vote::new(vote.election_round+1, highest, election_id, false, consensus_round).await;
                                 self.votes.push(vote.clone());
                                 //election.round = header.round + 1;
                                 election.insert_vote(&vote, self.name);
@@ -231,7 +239,7 @@ impl Core {
                                     .extend(handlers);*/
                                 //info!("Changing vote: {:?}", own_header);
                             }
-                            else if !election.voted_or_committed(&self.name, vote.round) {
+                            else if !election.voted_or_committed(&self.name, vote.election_round) {
                                     let mut tx_hash = tx_hash;
                                     if let Some(highest) = &election.highest {
                                         tx_hash = highest.clone();
@@ -239,7 +247,13 @@ impl Core {
                                     //election.voted = true;
                                     //election.round = header.round + 1;
                                     //own_header.author = self.name;
-                                    let vote = Vote::new(vote.round, tx_hash, election_id, vote.commit).await;
+
+                                    let mut consensus_round = vote.consensus_round;
+                                    if let Some(hr) = election.highest_round {
+                                        consensus_round = hr;
+                                    }
+
+                                    let vote = Vote::new(vote.election_round, tx_hash, election_id, vote.commit, consensus_round).await;
                                     election.insert_vote(&vote, self.name);
                                     self.votes.push(vote);
 
@@ -272,7 +286,7 @@ impl Core {
                 let mut rng = OsRng;
                 let digest = self.payloads.get(&election_id).unwrap().iter().choose(&mut rng).unwrap().clone();
                 //let digest = Digest::random();
-                let vote = Vote::new(vote.round, digest, election_id, rand::random()).await;
+                let vote = Vote::new(vote.election_round, digest, election_id, rand::random(), vote.consensus_round).await;
                 self.votes.push(vote);
                 //let own_header = Header::new(self.name, header.round, payload, &mut self.signature_service, rand::random()).await;
                 // broadcast vote

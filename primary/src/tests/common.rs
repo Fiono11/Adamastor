@@ -145,7 +145,7 @@ pub fn votes(header: &Header) -> Vec<Vote> {
         .map(|(author, secret)| {
             let vote = Vote {
                 id: header.id.clone(),
-                round: header.round,
+                election_round: header.round,
                 origin: header.author,
                 author,
                 signature: Signature::default(),
