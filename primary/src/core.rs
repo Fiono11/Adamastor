@@ -113,15 +113,48 @@ impl Core {
     }
 
     #[async_recursion]
-    async fn process_header(&mut self, header: &Header) -> DagResult<()> {
+    async fn process_own_header(&mut self, header: &Header) -> DagResult<()> {
         //info!("Received header {:?} from {}", header, header.author);
-        if header.author == self.name {
             // broadcast vote
             let bytes = bincode::serialize(&PrimaryMessage::Header(header.clone()))
                 .expect("Failed to serialize our own header");
             let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
-        }
 
+        for vote in &header.votes {
+            if !vote.commit {
+                //info!("Received vote {:?} from {}", vote, header.author);
+            }
+            else {
+                //info!("Received commit {:?} from {}", vote, header.author);
+            }
+            let (tx_hash, election_id) = (vote.tx_hash.clone(), vote.election_id.clone()); 
+            if !self.byzantine {
+                match self.elections.get_mut(&election_id) {
+                    Some(election) => {
+                        election.insert_vote(&vote, header.author);
+                    }
+                    None => {
+                        // create election
+                        let election = Election::new();
+                        self.elections.insert(election_id.clone(), election);
+
+                        #[cfg(feature = "benchmark")]
+                        // NOTE: This log entry is used to compute performance.
+                        info!("Created {} -> {:?}", vote, election_id);
+                            
+                        let mut election = self.elections.get_mut(&election_id).unwrap();
+                        // insert vote
+                        election.insert_vote(&vote, header.author);
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    #[async_recursion]
+    async fn process_header(&mut self, header: &Header) -> DagResult<()> {
+  
         for vote in &header.votes {
             if !vote.commit {
                 //info!("Received vote {:?} from {}", vote, header.author);
@@ -232,7 +265,7 @@ impl Core {
 
             //info!("VOTES: {}", self.votes.len());
         }
-        if !self.votes.len() >= self.header_size {
+        if self.votes.len() >= self.header_size {
             //for vote in &self.votes {
                 //info!("{} sending vote {:?}", self.name, vote);
             //}
@@ -258,7 +291,7 @@ impl Core {
                 },
 
                 // We also receive here our new headers created by the `Proposer`.
-                Some(header) = self.rx_proposer.recv() => self.process_header(&header).await,
+                Some(header) = self.rx_proposer.recv() => self.process_own_header(&header).await,
             };
             match result {
                 Ok(()) => (),

@@ -18,7 +18,7 @@ def local(ctx, debug=True):
         'workers': 1,
         'rate': 50000,
         'tx_size': 500,
-        'duration': 5,
+        'duration': 20,
         'runs': 1,
     }
     node_params = {

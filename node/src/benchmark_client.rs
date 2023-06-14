@@ -129,7 +129,7 @@ impl Client {
         info!("Start sending transactions");
 
         //'main: loop {
-        for _ in 0..10 {
+        for _ in 0..100 {
             interval.as_mut().tick().await;
             let now = Instant::now();
 
@@ -150,7 +150,7 @@ impl Client {
                 };
 
                 tx.id = id.to_vec();
-                    info!("Sending transaction with id {:?} and digest {:?}", tx.id, tx.digest());
+                    //info!("Sending transaction with id {:?} and digest {:?}", tx.id, tx.digest());
                     let message = bincode::serialize(&tx.clone()).unwrap();
                     //if counter == 0 {
                         //info!("TX SIZE: {:?}", message.len());
@@ -172,7 +172,7 @@ impl Client {
             }
             counter += 1;
         }
-        //info!("Sent {} txs", counter2);
+        info!("Sent {} txs", counter2);
         Ok(())
     }
 
