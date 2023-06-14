@@ -114,6 +114,7 @@ impl Core {
 
     #[async_recursion]
     async fn process_header(&mut self, header: &Header) -> DagResult<()> {
+        //info!("Received header {:?} from {}", header, header.author);
         if header.author == self.name {
             // broadcast vote
             let bytes = bincode::serialize(&PrimaryMessage::Header(header.clone()))
@@ -229,7 +230,12 @@ impl Core {
                 //info!("Sending vote: {:?}", own_header);*/
             }
 
-            if self.votes.len() >= self.header_size {
+            //info!("VOTES: {}", self.votes.len());
+
+            if !self.votes.is_empty() {
+                //for vote in &self.votes {
+                    //info!("{} sending vote {:?}", self.name, vote);
+                //}
                 // broadcast votes
                 let own_header = Header::new(self.name, self.votes.drain(..).collect(), &mut self.signature_service).await;
                 let bytes = bincode::serialize(&PrimaryMessage::Header(own_header.clone()))
