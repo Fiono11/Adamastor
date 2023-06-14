@@ -231,17 +231,16 @@ impl Core {
             }
 
             //info!("VOTES: {}", self.votes.len());
-
-            if !self.votes.is_empty() {
-                //for vote in &self.votes {
-                    //info!("{} sending vote {:?}", self.name, vote);
-                //}
-                // broadcast votes
-                let own_header = Header::new(self.name, self.votes.drain(..).collect(), &mut self.signature_service).await;
-                let bytes = bincode::serialize(&PrimaryMessage::Header(own_header.clone()))
-                    .expect("Failed to serialize our own header");
-                let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
-            }
+        }
+        if !self.votes.len() >= self.header_size {
+            //for vote in &self.votes {
+                //info!("{} sending vote {:?}", self.name, vote);
+            //}
+            // broadcast votes
+            let own_header = Header::new(self.name, self.votes.drain(..).collect(), &mut self.signature_service).await;
+            let bytes = bincode::serialize(&PrimaryMessage::Header(own_header.clone()))
+                .expect("Failed to serialize our own header");
+            let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
         }
         Ok(())
     }
