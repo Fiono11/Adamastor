@@ -19,7 +19,7 @@ impl PartialEq for Header {
     }
 }
 
-impl PartialEq for Vote {
+/*impl PartialEq for Vote {
     fn eq(&self, other: &Self) -> bool {
         self.digest() == other.digest()
     }
@@ -27,7 +27,7 @@ impl PartialEq for Vote {
 
 impl Eq for Vote {
     
-}
+}*/
 
 // Fixture
 pub fn keys() -> Vec<(PublicKey, SecretKey)> {

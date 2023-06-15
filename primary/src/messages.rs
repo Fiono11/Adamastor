@@ -19,7 +19,7 @@ pub trait Hash {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Header {
     pub author: PublicAddress,
-    pub votes: Vec<Vote>,
+    pub votes: BTreeSet<Vote>,
     pub signature: Signature,
     //pub id: Digest,
 }
@@ -27,12 +27,21 @@ pub struct Header {
 impl Header {
     pub async fn new(
         author: PublicAddress,
-        votes: Vec<Vote>,
+        votes: BTreeSet<Vote>,
         signature_service: &mut SignatureService,
     ) -> Self {
+        // Ensure all votes in the same round with the same election_id are unique.
+        let mut seen_ids = std::collections::HashMap::new();
+        for vote in &votes {
+            match seen_ids.insert((vote.round, vote.election_id.clone()), true) {
+                None => (), // Key was not present in the map, everything is fine.
+                Some(_) => panic!("Votes in the same round cannot have the same election_id!"),
+            }
+        }
+
         let header = Self {
             author,
-            votes: Vec::new(),
+            votes: BTreeSet::new(),
             signature: Signature::default(),
             //id: Digest::default(),
         };
@@ -102,7 +111,7 @@ impl fmt::Display for Header {
     }
 }*/
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Vote {
     pub round: Round,
     pub tx_hash: TxHash,

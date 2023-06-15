@@ -13,10 +13,12 @@ use log::{debug, error, warn, info};
 use network::{CancelHandler, ReliableSender, SimpleSender};
 use rand::rngs::OsRng;
 use rand::seq::IteratorRandom;
+use tokio::time::{sleep, Instant};
 use std::collections::{HashMap, HashSet, BTreeSet};
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use store::Store;
 use tokio::sync::mpsc::{Receiver, Sender};
 
@@ -114,7 +116,8 @@ impl Core {
 
     #[async_recursion]
     async fn process_own_header(&mut self, header: &Header) -> DagResult<()> {
-        //info!("Received header {:?} from {}", header, header.author);
+        assert!(header.author == self.name);
+        info!("Received own header with {} votes", header.votes.len());
             // broadcast vote
             let bytes = bincode::serialize(&PrimaryMessage::Header(header.clone()))
                 .expect("Failed to serialize our own header");
@@ -154,6 +157,18 @@ impl Core {
 
     #[async_recursion]
     async fn process_header(&mut self, header: &Header) -> DagResult<()> {
+
+        if header.author == self.name {
+            info!("Received own header with {} votes from {}", header.votes.len(), header.author);
+
+            // broadcast header
+            let bytes = bincode::serialize(&PrimaryMessage::Header(header.clone()))
+                .expect("Failed to serialize our own header");
+            let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
+        }
+        else {
+            info!("Received header with {} votes from {}", header.votes.len(), header.author);
+        }
   
         for vote in &header.votes {
             if !vote.commit {
@@ -189,9 +204,9 @@ impl Core {
                     if let Some(tally) = election.tallies.get(&vote.round) {
 
                         // reaches quorum of commits in this round
-                        if let Some(_) = tally.find_quorum_of_commits() {
-                            #[cfg(not(feature = "benchmark"))]
-                            info!("Committed {}", vote);
+                        if let Some(_) = election.find_quorum_of_commits() {
+                            //#[cfg(not(feature = "benchmark"))]
+                            //info!("Committed {}", vote);
                                                     
                             #[cfg(feature = "benchmark")]
                             // NOTE: This log entry is used to compute performance.
@@ -214,8 +229,14 @@ impl Core {
                             // voted in this round already, not voted in the next round
                             else if election.voted_or_committed(&self.name, vote.round) && ((tally.total_votes() >= QUORUM && *tally.timer.0.lock().unwrap() == Timer::Expired) || tally.total_votes() == NUMBER_OF_NODES)
                             && !election.voted_or_committed(&self.name, vote.round + 1) {
-                                let highest = election.highest.clone().unwrap();
-                                let vote = Vote::new(vote.round+1, highest, election_id, false).await;
+                                let mut highest = election.highest.clone().unwrap();
+                                let mut committed = false;
+
+                                    if let Some(commit) = &election.commit {
+                                        highest = commit.clone();
+                                        committed = true;
+                                    }
+                                let vote = Vote::new(vote.round+1, highest, election_id, committed).await;
                                 self.votes.push(vote.clone());
                                 election.insert_vote(&vote, self.name);
                             }
@@ -226,7 +247,10 @@ impl Core {
                                 if let Some(highest) = &election.highest {
                                     tx_hash = highest.clone();
                                 }
-                                let vote = Vote::new(vote.round, tx_hash, election_id, false).await;
+                                if let Some(commit) = &election.commit {
+                                    tx_hash = commit.clone();
+                                }
+                                let vote = Vote::new(vote.round, tx_hash, election_id, vote.commit).await;
                                 election.insert_vote(&vote, self.name);
                                 self.votes.push(vote);                         
                             }
@@ -275,11 +299,15 @@ impl Core {
                 .expect("Failed to serialize our own header");
             let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
         }
+        
         Ok(())
     }
 
     // Main loop listening to incoming messages.
     pub async fn run(&mut self) {
+        let timer: tokio::time::Sleep = sleep(Duration::from_millis(1000));
+        tokio::pin!(timer);
+
         loop {
             let result = tokio::select! {
                 // We receive here messages from other primaries.
@@ -290,8 +318,29 @@ impl Core {
                     }
                 },
 
+                () = &mut timer => {
+                    info!("Votes of {}: {}", self.name, self.votes.len());
+
+                    if self.votes.len() > 0 {
+                        //for vote in &self.votes {
+                            //info!("{} sending vote {:?}", self.name, vote);
+                        //}
+                        // broadcast votes
+                        info!("{} sending header with {} votes", self.name, self.votes.len());
+                        let own_header = Header::new(self.name, self.votes.drain(..).collect(), &mut self.signature_service).await;
+                        let bytes = bincode::serialize(&PrimaryMessage::Header(own_header.clone()))
+                            .expect("Failed to serialize our own header");
+                        let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
+                    }
+
+                    let deadline = Instant::now() + Duration::from_millis(1000);
+                    timer.as_mut().reset(deadline);
+                    
+                    Ok(())
+                }
+
                 // We also receive here our new headers created by the `Proposer`.
-                Some(header) = self.rx_proposer.recv() => self.process_own_header(&header).await,
+                Some(header) = self.rx_proposer.recv() => self.process_header(&header).await,
             };
             match result {
                 Ok(()) => (),

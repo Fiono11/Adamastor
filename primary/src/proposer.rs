@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use crate::core::TxHash;
 use crate::election::ElectionId;
 use crate::messages::{Header, Hash, Vote};
@@ -39,6 +41,7 @@ pub struct Proposer {
     /// Keeps track of the size (in bytes) of batches' digests that we received so far.
     payload_size: usize,
     votes: Vec<Vote>,
+    active_elections: Vec<Digest>,
 }
 
 impl Proposer {
@@ -66,6 +69,7 @@ impl Proposer {
                 digests: Vec::with_capacity(2 * header_size),
                 payload_size: 0,
                 votes: Vec::with_capacity(header_size),
+                active_elections: Vec::new(),
             }
             .run()
             .await;
@@ -80,6 +84,8 @@ impl Proposer {
             &mut self.signature_service,
         )
         .await;
+
+        //info!("Votes: {:?}", header.votes);
         //debug!("Created {:?}", header);
         
         //#[cfg(feature = "benchmark")]
@@ -127,15 +133,11 @@ impl Proposer {
 
             tokio::select! {
                 Some((tx_hash, election_id)) = self.rx_workers.recv() => {
-                    let vote = Vote::new(0, tx_hash, election_id, false).await;
-                    self.votes.push(vote);
-                    //self.make_header(tx_hash, election_id).await;
-                    //info!("Received digest {:?}", digest);
-                    //self.payload_size += tx_hash.size();
-                    //self.digests.push((tx_hash, election_id));
-                    //self.make_header().await;
-                    //info!("Size: {:?}", self.payload_size);
-                    //info!("Digests: {:?}", self.digests);
+                    if !self.active_elections.contains(&election_id) {
+                        self.active_elections.push(election_id.clone());
+                        let vote = Vote::new(0, tx_hash, election_id, false).await;
+                        self.votes.push(vote);
+                    }
                 }
                 () = &mut timer => {
                     // Nothing to do.
