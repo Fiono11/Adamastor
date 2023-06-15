@@ -28,6 +28,8 @@ pub mod core_tests;
 
 pub type TxHash = Digest;
 
+const TIMER: u64 = 100;
+
 pub struct Core {
     /// The public key of this primary.
     name: PublicAddress,
@@ -305,7 +307,7 @@ impl Core {
 
     // Main loop listening to incoming messages.
     pub async fn run(&mut self) {
-        let timer: tokio::time::Sleep = sleep(Duration::from_millis(1000));
+        let timer: tokio::time::Sleep = sleep(Duration::from_millis(TIMER));
         tokio::pin!(timer);
 
         loop {
@@ -333,7 +335,7 @@ impl Core {
                         let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
                     }
 
-                    let deadline = Instant::now() + Duration::from_millis(1000);
+                    let deadline = Instant::now() + Duration::from_millis(TIMER);
                     timer.as_mut().reset(deadline);
                     
                     Ok(())
