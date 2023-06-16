@@ -109,7 +109,7 @@ impl Client {
         let burst = self.rate / PRECISION;
         //let burst = 20;
         let mut data: Vec<u8> = Vec::new();
-        for _ in 0..self.size {
+        for _ in 0..(self.size - 32) {
             data.push(rand::thread_rng().gen());
             //data.push(0);
         }
@@ -120,16 +120,21 @@ impl Client {
         let mut counter2 = 0;
         let mut r: u64 = thread_rng().gen();
         let mut r2: u32 = thread_rng().gen();
-        let mut r: u64 = 0;
+        //let mut r: u64 = 0;
+        let mut forks = false;
+        if r == 0 {
+            forks = true;
+        }
+        info!("Forks: {}", forks);
         let mut transport = Framed::new(stream, LengthDelimitedCodec::new());
         let interval = interval(Duration::from_millis(BURST_DURATION));
         tokio::pin!(interval);
 
         // NOTE: This log entry is used to compute performance.
-        info!("Start sending transactions");
+        info!("Start sending {} transactions", PRECISION * burst * (self.nodes.len() as u64));
 
         //'main: loop {
-        for _ in 0..10 {
+        for _ in 0..PRECISION * (self.nodes.len() as u64) {
             interval.as_mut().tick().await;
             let now = Instant::now();
 
@@ -139,7 +144,7 @@ impl Client {
                     id.put_u8(0u8); // Sample txs start with 0.
                     //id.put_u64(r);
                     id.put_u64(counter); // This counter identifies the tx.
-                    //id.put_u32(r2);
+                    id.put_u32(r2);
 
                     // NOTE: This log entry is used to compute performance.
                     info!("Sending sample transaction {}", counter); 
@@ -150,7 +155,7 @@ impl Client {
                 };
 
                 tx.id = id.to_vec();
-                    info!("Sending transaction with id {:?} and digest {:?}", tx.id, tx.digest());
+                    //info!("Sending transaction with id {:?} and digest {:?}", tx.id, tx.digest());
                     let message = bincode::serialize(&tx.clone()).unwrap();
                     //if counter == 0 {
                         //info!("TX SIZE: {:?}", message.len());
@@ -173,6 +178,12 @@ impl Client {
             counter += 1;
         }
         info!("Sent {} txs", counter2);
+        if forks {
+            info!("Total bytes: {}", counter2 * 532);
+        }
+        else {
+            info!("Total bytes: {}", counter2 * 532 * (self.nodes.len()));
+        }
         Ok(())
     }
 
