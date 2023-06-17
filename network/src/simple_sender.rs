@@ -5,11 +5,11 @@ use futures::sink::SinkExt as _;
 use futures::stream::StreamExt as _;
 use log::{info, warn};
 use rand::prelude::SliceRandom as _;
-use rand::rngs::{SmallRng, OsRng};
-use rand::{SeedableRng as _, Rng};
+use rand::rngs::{OsRng, SmallRng};
+use rand::{Rng, SeedableRng as _};
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::thread;
+
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
@@ -74,13 +74,13 @@ impl SimpleSender {
         let duration_ms = rng.gen_range(0..=5);
 
         // Convert the duration to the appropriate type
-        let duration = Duration::from_millis(duration_ms);
+        let _duration = Duration::from_millis(duration_ms);
 
         // Sleep for the random duration
         //thread::sleep(duration);
 
         //info!("Broadcast in {} ms", duration_ms);
-        
+
         for address in addresses {
             self.send(address, data.clone()).await;
         }

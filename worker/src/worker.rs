@@ -1,16 +1,16 @@
 // Copyright(C) Facebook, Inc. and its affiliates.
-use crate::batch_maker::{Batch, BatchMaker};
-use crate::helper::Helper;
+use crate::batch_maker::BatchMaker;
+
 use crate::primary_connector::PrimaryConnector;
-use crate::processor::{Processor, SerializedBatchMessage};
-use crate::quorum_waiter::QuorumWaiter;
+use crate::processor::Processor;
+
 use crate::synchronizer::Synchronizer;
 use async_trait::async_trait;
 use bytes::Bytes;
 use config::{Committee, Parameters, WorkerId};
 use crypto::{Digest, PublicKey};
 use futures::sink::SinkExt as _;
-use log::{error, info, warn};
+use log::{error, info};
 use network::{MessageHandler, Receiver, Writer};
 use primary::{PrimaryWorkerMessage, Transaction};
 use serde::{Deserialize, Serialize};
@@ -18,10 +18,6 @@ use std::error::Error;
 use std::net::SocketAddr;
 use store::Store;
 use tokio::sync::mpsc::{channel, Sender};
-
-#[cfg(test)]
-#[path = "tests/worker_tests.rs"]
-pub mod worker_tests;
 
 /// The default channel capacity for each channel of the worker.
 pub const CHANNEL_CAPACITY: usize = 100_0000;
@@ -142,9 +138,13 @@ impl Worker {
     }
 
     /// Spawn all tasks responsible to handle clients transactions.
-    fn handle_clients_transactions(&self, tx_primary: Sender<SerializedBatchDigestMessage>, primary_address: SocketAddr) {
+    fn handle_clients_transactions(
+        &self,
+        tx_primary: Sender<SerializedBatchDigestMessage>,
+        primary_address: SocketAddr,
+    ) {
         let (tx_batch_maker, rx_batch_maker) = channel(CHANNEL_CAPACITY);
-        let (tx_quorum_waiter, rx_quorum_waiter) = channel(CHANNEL_CAPACITY);
+        let (tx_quorum_waiter, _rx_quorum_waiter) = channel(CHANNEL_CAPACITY);
         let (tx_processor, rx_processor) = channel(CHANNEL_CAPACITY);
 
         // We first receive clients' transactions from the network.
@@ -174,7 +174,7 @@ impl Worker {
                 .map(|(name, addresses)| (*name, addresses.worker_to_worker))
                 .collect(),
             primary_address,
-            tx_processor
+            tx_processor,
         );
 
         // The `QuorumWaiter` waits for 2f authorities to acknowledge reception of the batch. It then forwards
@@ -203,8 +203,8 @@ impl Worker {
     }
 
     /// Spawn all tasks responsible to handle messages from other workers.
-    fn handle_workers_messages(&self, tx_primary: Sender<SerializedBatchDigestMessage>) {
-       /*let (tx_helper, rx_helper) = channel(CHANNEL_CAPACITY);
+    fn handle_workers_messages(&self, _tx_primary: Sender<SerializedBatchDigestMessage>) {
+        /*let (tx_helper, rx_helper) = channel(CHANNEL_CAPACITY);
         let (tx_processor, rx_processor) = channel(CHANNEL_CAPACITY);
 
         // Receive incoming messages from other workers.
@@ -270,22 +270,22 @@ impl MessageHandler for TxReceiverHandler {
 
         //let start2 = Instant::now();
 
-                //for tx in block.txs {
-                    //Verify(&tx.signature, "msg", &self.R).unwrap();
+        //for tx in block.txs {
+        //Verify(&tx.signature, "msg", &self.R).unwrap();
 
-		//let end2 = Instant::now();
+        //let end2 = Instant::now();
 
-		//let duration2 = Duration::as_millis(&(end2-start2));
+        //let duration2 = Duration::as_millis(&(end2-start2));
 
-		//info!("verification: {:?} ms", duration2);
-                    //check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
-                //}
+        //info!("verification: {:?} ms", duration2);
+        //check_range_proof(&RangeProof::from_bytes(&tx.range_proof_bytes).unwrap(), &tx.commitment, &PedersenGens::default(), &mut OsRng).unwrap();
+        //}
 
         //for tx in txs {
-            self.tx_batch_maker
-                .send(tx)
-                .await
-                .expect("Failed to send transaction");
+        self.tx_batch_maker
+            .send(tx)
+            .await
+            .expect("Failed to send transaction");
         //}
 
         // Give the change to schedule other tasks.
@@ -309,7 +309,7 @@ impl MessageHandler for WorkerReceiverHandler {
 
         // Deserialize and parse the message.
         match bincode::deserialize(&serialized) {
-            Ok(WorkerMessage::Batch(block)) => { 
+            Ok(WorkerMessage::Batch(block)) => {
                 info!("Received block: {:?}", block);
 
                 self

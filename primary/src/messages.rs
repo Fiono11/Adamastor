@@ -3,12 +3,12 @@ use crate::election::ElectionId;
 // Copyright(C) Facebook, Inc. and its affiliates.
 use crate::error::{DagError, DagResult};
 use crate::primary::Round;
-use config::{Committee, WorkerId};
-use ed25519_dalek::{Digest as _, Sha512};
+use config::Committee;
 use crypto::{Digest, PublicKey as PublicAddress, Signature, SignatureService};
+use ed25519_dalek::{Digest as _, Sha512};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::convert::{TryInto, TryFrom};
+use std::collections::BTreeSet;
+use std::convert::TryInto;
 use std::fmt;
 
 /// This trait is implemented by all messages that can be hashed.
@@ -45,7 +45,7 @@ impl Header {
             signature: Signature::default(),
             //id: Digest::default(),
         };
-        let id = header.digest();
+        let _id = header.digest();
         let signature = signature_service.request_signature(Digest::default()).await;
         Self {
             //id,
@@ -61,7 +61,10 @@ impl Header {
 
         // Ensure the authority has voting rights.
         let voting_rights = committee.stake(&self.author);
-        ensure!(voting_rights > 0, DagError::UnknownAuthority(self.author.clone()));
+        ensure!(
+            voting_rights > 0,
+            DagError::UnknownAuthority(self.author.clone())
+        );
 
         // Ensure all worker ids are correct.
         /*for worker_id in self.payload.values() {
@@ -86,7 +89,7 @@ impl Hash for Header {
             hasher.update(vote.digest());
         }
         //for x in &self.parents {
-            //hasher.update(x);
+        //hasher.update(x);
         //}
         Digest(hasher.finalize().as_slice()[..32].try_into().unwrap())
     }
@@ -120,14 +123,12 @@ pub struct Vote {
 }
 
 impl Vote {
-    pub async fn new(
-        round: Round,
-        tx_hash: TxHash,
-        election_id: ElectionId,
-        commit: bool,
-    ) -> Self {
+    pub async fn new(round: Round, tx_hash: TxHash, election_id: ElectionId, commit: bool) -> Self {
         Self {
-            round, tx_hash, election_id, commit,
+            round,
+            tx_hash,
+            election_id,
+            commit,
         }
     }
 }
@@ -160,4 +161,3 @@ impl fmt::Display for Vote {
         write!(f, "B{}({})", self.round, self.digest())
     }
 }
-

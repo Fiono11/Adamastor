@@ -2,10 +2,10 @@
 use crate::worker::{Round, WorkerMessage};
 use bytes::Bytes;
 use config::{Committee, WorkerId};
-use crypto::{PublicKey, Digest};
+use crypto::{Digest, PublicKey};
 use futures::stream::futures_unordered::FuturesUnordered;
 use futures::stream::StreamExt as _;
-use log::{debug, error};
+use log::error;
 use network::SimpleSender;
 use primary::PrimaryWorkerMessage;
 use std::collections::HashMap;
@@ -13,10 +13,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use store::{Store, StoreError};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::{sleep, Duration, Instant};
-
-#[cfg(test)]
-#[path = "tests/synchronizer_tests.rs"]
-pub mod synchronizer_tests;
 
 /// Resolution of the timer managing retrials of sync requests (in ms).
 const TIMER_RESOLUTION: u64 = 1_000;

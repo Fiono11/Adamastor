@@ -1,14 +1,14 @@
 // Copyright(C) Facebook, Inc. and its affiliates.
 use crate::core::{Core, TxHash};
-use crate::election::{ElectionId, self};
+use crate::election::ElectionId;
 use crate::error::DagError;
-use crate::messages::{Header, Hash};
+use crate::messages::{Hash, Header};
 use crate::payload_receiver::PayloadReceiver;
 use crate::proposer::Proposer;
 use async_trait::async_trait;
 use bytes::Bytes;
-use config::{Committee, Parameters, WorkerId};
-use crypto::{Digest, PublicKey, SignatureService, SecretKey};
+use config::{Committee, Parameters};
+use crypto::{Digest, PublicKey, SecretKey, SignatureService};
 use ed25519_dalek::{Digest as _, Sha512};
 use futures::sink::SinkExt as _;
 use log::info;
@@ -19,7 +19,7 @@ use std::error::Error;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use store::Store;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
+use tokio::sync::mpsc::{channel, Sender};
 
 /// The default channel capacity for each channel of the primary.
 pub const CHANNEL_CAPACITY: usize = 100_000;

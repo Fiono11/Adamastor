@@ -1,6 +1,6 @@
 // Copyright(C) Facebook, Inc. and its affiliates.
 use crate::primary::Round;
-use crypto::{Digest as TxHash, PublicKey as PublicAddress, CryptoError};
+use crypto::{CryptoError, Digest as TxHash, PublicKey as PublicAddress};
 use store::StoreError;
 use thiserror::Error;
 

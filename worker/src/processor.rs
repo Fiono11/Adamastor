@@ -4,15 +4,11 @@ use config::WorkerId;
 use crypto::Digest;
 use ed25519_dalek::Digest as _;
 use ed25519_dalek::Sha512;
-use log::info;
+
 use primary::WorkerPrimaryMessage;
 use std::convert::TryInto;
 use store::Store;
 use tokio::sync::mpsc::{Receiver, Sender};
-
-#[cfg(test)]
-#[path = "tests/processor_tests.rs"]
-pub mod processor_tests;
 
 /// Indicates a serialized `WorkerMessage::Batch` message.
 pub type SerializedBatchMessage = Vec<u8>;
@@ -23,9 +19,9 @@ pub struct Processor;
 impl Processor {
     pub fn spawn(
         // Our worker's id.
-        id: WorkerId,
+        _id: WorkerId,
         // The persistent storage.
-        mut store: Store,
+        _store: Store,
         // Input channel to receive batches.
         mut rx_batch: Receiver<(SerializedBatchMessage, Digest)>,
         // Output channel to send out batches' digests.

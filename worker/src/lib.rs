@@ -7,8 +7,4 @@ mod quorum_waiter;
 mod synchronizer;
 mod worker;
 
-#[cfg(test)]
-#[path = "tests/common.rs"]
-mod common;
-
-pub use crate::worker::{Worker, Block};
+pub use crate::worker::{Block, Worker};

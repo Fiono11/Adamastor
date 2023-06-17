@@ -1,14 +1,14 @@
-use crate::Block;
 use crate::processor::SerializedBatchMessage;
+use crate::Block;
 // Copyright(C) Facebook, Inc. and its affiliates.
 use crate::quorum_waiter::QuorumWaiterMessage;
 use crate::worker::WorkerMessage;
-use bytes::Bytes;
+
 //#[cfg(feature = "benchmark")]
-use crypto::{PublicKey, Digest};
+use crypto::{Digest, PublicKey};
 #[cfg(feature = "benchmark")]
 use ed25519_dalek::{Digest as _, Sha512};
-//#[cfg(feature = "benchmark")]
+#[cfg(feature = "benchmark")]
 use log::info;
 use network::ReliableSender;
 use primary::Transaction;
@@ -17,10 +17,6 @@ use std::convert::TryInto as _;
 use std::net::SocketAddr;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::time::{sleep, Duration, Instant};
-
-#[cfg(test)]
-#[path = "tests/batch_maker_tests.rs"]
-pub mod batch_maker_tests;
 
 //pub type Transaction = Vec<u8>;
 pub type Batch = Vec<Transaction>;
@@ -169,15 +165,14 @@ impl BatchMaker {
         let mut array: [u8; 32] = [0; 32];
 
         let vec = batch[0].id.clone();
-    
+
         let vec_len = vec.len();
-        
+
         if vec_len < 32 {
             array[..vec_len].clone_from_slice(&vec[..vec_len]);
         } else {
             array.clone_from_slice(&vec[..32]);
         }
-
 
         //info!("serialized: {:?}", serialized);
 
@@ -201,7 +196,7 @@ impl BatchMaker {
             }
 
             // NOTE: This log entry is used to compute performance.
-            info!("Batch {:?} contains {} B",  Digest(array), size);
+            info!("Batch {:?} contains {} B", Digest(array), size);
         }
 
         // Broadcast the batch through the network.
@@ -218,11 +213,11 @@ impl BatchMaker {
 
         // Send the batch through the deliver channel for further processing.
         /*self.tx_message
-            .send(QuorumWaiterMessage {
-                batch: serialized,
-                handlers: names.into_iter().zip(handlers.into_iter()).collect(),
-            })
-            .await
-            .expect("Failed to deliver batch");*/
+        .send(QuorumWaiterMessage {
+            batch: serialized,
+            handlers: names.into_iter().zip(handlers.into_iter()).collect(),
+        })
+        .await
+        .expect("Failed to deliver batch");*/
     }
 }

@@ -1,7 +1,12 @@
-use std::{collections::{BTreeSet, HashMap}, sync::{Arc, Mutex, Condvar}, thread::{self, sleep}, time::Duration};
-use crypto::{PublicKey as PublicAddress, Digest};
+use crypto::{Digest, PublicKey as PublicAddress};
+use std::{
+    collections::{BTreeSet, HashMap},
+    sync::{Arc, Condvar, Mutex},
+    thread::{self, sleep},
+    time::Duration,
+};
 
-use crate::{Round, Header, constants::{QUORUM, SEMI_QUORUM}, core::TxHash, messages::Vote};
+use crate::{constants::QUORUM, core::TxHash, messages::Vote, Round};
 
 pub type ElectionId = Digest;
 
@@ -49,8 +54,7 @@ impl Election {
                 if tx_hash > highest {
                     self.highest = Some(tx_hash.clone());
                 }
-            }
-            else {
+            } else {
                 self.highest = Some(tx_hash.clone());
             }
         }
@@ -79,7 +83,7 @@ impl Election {
             None => return false,
         }
         false
-    }    
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -137,7 +141,11 @@ impl Tally {
     }
 
     fn insert_to_tally(&mut self, tx_hash: Digest, author: PublicAddress, is_commit: bool) {
-        let target = if is_commit { &mut self.commits } else { &mut self.votes };
+        let target = if is_commit {
+            &mut self.commits
+        } else {
+            &mut self.votes
+        };
         match target.get_mut(&tx_hash) {
             Some(btreeset) => {
                 btreeset.insert(author);

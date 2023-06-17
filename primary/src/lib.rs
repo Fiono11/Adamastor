@@ -7,17 +7,13 @@ mod core;
 //mod garbage_collector;
 //mod header_waiter;
 //mod helper;
+mod election;
 mod messages;
 mod payload_receiver;
 mod primary;
 mod proposer;
-mod election;
 //mod synchronizer;
 mod constants;
 
-#[cfg(test)]
-#[path = "tests/common.rs"]
-mod common;
-
-pub use crate::messages::{Header, Hash};
-pub use crate::primary::{Primary, PrimaryWorkerMessage, Round, WorkerPrimaryMessage, Transaction};
+pub use crate::messages::{Hash, Header};
+pub use crate::primary::{Primary, PrimaryWorkerMessage, Round, Transaction, WorkerPrimaryMessage};

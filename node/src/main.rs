@@ -5,7 +5,7 @@ use config::Export as _;
 use config::Import as _;
 use config::{Committee, KeyPair, Parameters, WorkerId};
 use env_logger::Env;
-use primary::Header;
+
 use primary::Primary;
 use store::Store;
 use tokio::sync::mpsc::{channel, Receiver};
@@ -15,7 +15,7 @@ use worker::Worker;
 pub const CHANNEL_CAPACITY: usize = 100_000;
 
 #[tokio::main]
-async fn main() -> Result<()> {    
+async fn main() -> Result<()> {
     let matches = App::new(crate_name!())
         .version(crate_version!())
         .about("A research implementation of Narwhal and Tusk.")
@@ -75,7 +75,9 @@ async fn run(matches: &ArgMatches<'_>) -> Result<()> {
     let store_path = matches.value_of("store").unwrap();
 
     // Read the committee and node's keypair from file.
-    let keypair = KeyPair::import(key_file).context("Failed to load the node's keypair").unwrap();
+    let keypair = KeyPair::import(key_file)
+        .context("Failed to load the node's keypair")
+        .unwrap();
     let committee =
         Committee::import(committee_file).context("Failed to load the committee information")?;
 
@@ -91,7 +93,7 @@ async fn run(matches: &ArgMatches<'_>) -> Result<()> {
     let store = Store::new(store_path).context("Failed to create a store")?;
 
     // Channels the sequence of certificates.
-    let (tx_output, rx_output) = channel(CHANNEL_CAPACITY);
+    let (_tx_output, rx_output) = channel(CHANNEL_CAPACITY);
 
     // Check whether to run a primary, a worker, or an entire authority.
     match matches.subcommand() {

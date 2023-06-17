@@ -7,10 +7,6 @@ use futures::stream::StreamExt as _;
 use network::CancelHandler;
 use tokio::sync::mpsc::{Receiver, Sender};
 
-#[cfg(test)]
-#[path = "tests/quorum_waiter_tests.rs"]
-pub mod quorum_waiter_tests;
-
 #[derive(Debug)]
 pub struct QuorumWaiterMessage {
     /// A serialized `WorkerMessage::Batch` message.

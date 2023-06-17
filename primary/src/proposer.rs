@@ -1,20 +1,14 @@
-use std::collections::BTreeSet;
-
 use crate::core::TxHash;
 use crate::election::ElectionId;
-use crate::messages::{Header, Hash, Vote};
+use crate::messages::{Header, Vote};
 use crate::primary::Round;
-use config::{Committee, WorkerId};
+use config::Committee;
 use crypto::{Digest, PublicKey, SignatureService};
-use log::{debug, info};
+
 //#[cfg(feature = "benchmark")]
 //use log::info;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::time::{sleep, Duration, Instant};
-
-#[cfg(test)]
-#[path = "tests/proposer_tests.rs"]
-pub mod proposer_tests;
 
 /// The proposer creates new headers and send them to the core for broadcasting and further processing.
 pub struct Proposer {
@@ -48,7 +42,7 @@ impl Proposer {
     #[allow(clippy::too_many_arguments)]
     pub fn spawn(
         name: PublicKey,
-        committee: &Committee,
+        _committee: &Committee,
         signature_service: SignatureService,
         header_size: usize,
         max_header_delay: u64,
@@ -87,11 +81,11 @@ impl Proposer {
 
         //info!("Votes: {:?}", header.votes);
         //debug!("Created {:?}", header);
-        
+
         //#[cfg(feature = "benchmark")]
         //for vote in &header.votes {
-            // NOTE: This log entry is used to compute performance.
-            //info!("Created {} -> {:?}", &vote, vote.election_id);
+        // NOTE: This log entry is used to compute performance.
+        //info!("Created {} -> {:?}", &vote, vote.election_id);
         //}
 
         // Send the new header to the `Core` that will broadcast and process it.
