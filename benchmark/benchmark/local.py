@@ -86,7 +86,8 @@ class LocalBench:
                             address,
                             self.tx_size,
                             rate_share,
-                            [x for y in workers_addresses for _, x in y]
+                            [x for y in workers_addresses for _, x in y],
+                            i
                         )
                         log_file = PathMaker.client_log_file(i, id)
                         self._background_run(cmd, log_file)
@@ -125,7 +126,7 @@ class LocalBench:
                 # Parse logs and return the parser.
                 Print.info('Parsing logs...')
 
-                logger = LogParser.process(PathMaker.logs_path(), faults=self.faults)
+                logger = LogParser.process(PathMaker.logs_path(), (self.bench_parameters.nodes[0]-1)/3)
                             
                 result_filename = PathMaker.result_file(
                     self.bench_parameters.faults,

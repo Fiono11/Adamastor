@@ -6,7 +6,7 @@ from multiprocessing import Pool
 from os.path import join
 from re import findall, search
 from statistics import mean
-
+import re
 from benchmark.utils import Print
 
 
@@ -48,6 +48,7 @@ class LogParser:
         proposals, commits, self.configs, primary_ips = zip(*results)
         self.proposals = self._merge_results([x.items() for x in proposals])
         self.commits = self._merge_results([x.items() for x in commits])
+        #print("self commits: ", self.commits)
 
         # Parse the workers logs.
         try:
@@ -108,7 +109,10 @@ class LogParser:
 
         tmp = findall(r'\[(.*Z) .* Committed B\d+\([^ ]+\) -> ([^ ]+=)', log)
         tmp = [(d, self._to_posix(t)) for t, d in tmp]
+        #print("tmp: ", tmp)
         commits = self._merge_results([tmp])
+
+        #print("commits: ", commits)
 
         configs = {
             'header_size': int(
@@ -254,20 +258,26 @@ class LogParser:
             raise ValueError("Expected a filename or StringIO. Got %s" % type(file))
 
     @classmethod
-    def process(cls, directory, faults=0):
+    def process(cls, directory, faults):
         assert isinstance(directory, str)
 
         clients = []
-        for filename in sorted(glob(join(directory, 'client-*.log'))):
-            with open(filename, 'r') as f:
-                clients += [f.read()]
+        for filename in sorted(glob(join(directory, 'client-*-*'))):
+            num = int(re.search(r'client-(\d+)-\d+.log', filename).group(1))
+            if num >= faults:
+                with open(filename, 'r') as f:
+                    clients += [f.read()]
         primaries = []
         for filename in sorted(glob(join(directory, 'primary-*.log'))):
-            with open(filename, 'r') as f:
-                primaries += [f.read()]
+            num = int(re.search(r'primary-(\d+).log', filename).group(1))
+            if num >= faults:
+                with open(filename, 'r') as f:
+                    primaries += [f.read()]
         workers = []
-        for filename in sorted(glob(join(directory, 'worker-*.log'))):
-            with open(filename, 'r') as f:
-                workers += [f.read()]
+        for filename in sorted(glob(join(directory, 'worker-*-*'))):
+            num = int(re.search(r'worker-(\d+)-\d+.log', filename).group(1))
+            if num >= faults:
+                with open(filename, 'r') as f:
+                    workers += [f.read()]
 
         return cls(clients, primaries, workers, faults=faults)

@@ -16,10 +16,10 @@ def local(ctx, debug=True):
         'faults': 0,
         'nodes': [4],
         'workers': 1,
-        'rate': 12000,
+        'rate': 6000,
         'tx_size': 532,
         'duration': 5,
-        'runs': 2,
+        'runs': 1,
     }
     node_params = {
         'header_size': 1000,  # bytes
