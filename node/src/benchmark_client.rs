@@ -151,22 +151,28 @@ impl Client {
                 let now = Instant::now();
 
                 for x in 0..burst {
-                    if x == counter % burst {
+                    //if x == counter % burst {
                         //r += 1;
-                        id.put_u8(0u8); // Sample txs start with 0.
+                        //id.put_u8(0u8); // Sample txs start with 0.
                                         //id.put_u64(r);
-                        id.put_u64(counter); // This counter identifies the tx.
-                        id.put_u32(r2);
+                        //id.put_u64(counter); // This counter identifies the tx.
+                                             //id.put_u32(r2);
 
-                        // NOTE: This log entry is used to compute performance.
-                        info!("Sending sample transaction {}", counter);
-                    } else {
+                    // NOTE: This log entry is used to compute performance.
+                    //info!("Sending sample transaction {}", counter);
+                    //} else {
                         r += 1;
                         id.put_u8(1u8); // Standard txs start with 1.
                         id.put_u64(r); // Ensures all clients send different txs.
-                    };
+                    //};
 
                     tx.id = id.to_vec();
+                    if self.id != 0 {
+                        info!(
+                            "Sending sample transaction {}",
+                            self.rate * (self.nodes.len() as u64) * (self.id - 1) + counter2
+                        );
+                    }
                     //info!("Sending transaction with id {:?} and digest {:?}", tx.id, tx.digest());
                     let message = bincode::serialize(&tx.clone()).unwrap();
                     //if counter == 0 {

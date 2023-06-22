@@ -60,7 +60,7 @@ class LocalBench:
                 subprocess.run(cmd, check=True, cwd=PathMaker.node_crate_path())
 
                 # Create alias for the client and nodes binary.
-                cmd = CommandMaker.alias_binaries(PathMaker.binary_path(), True)
+                cmd = CommandMaker.alias_binaries(PathMaker.binary_path())
                 subprocess.run([cmd], shell=True)
 
                 # Generate configuration files.

@@ -60,10 +60,7 @@ class CommandMaker:
         return 'tmux kill-server'
 
     @staticmethod
-    def alias_binaries(origin, local=False):
+    def alias_binaries(origin):
         assert isinstance(origin, str)
         node, client = join(origin, 'node'), join(origin, 'benchmark_client')
-        if local == False:
-            return f'cp {node} /home/fiono/DelegatedRingCT/benchmark ; cp {client} /home/fiono/DelegatedRingCT/benchmark'
-        else:
-            return f'cp {node} /Users/ruimorais/DelegatedRingCT/benchmark ; cp {client} /Users/ruimorais/DelegatedRingCT/benchmark'
+        return f'rm node ; rm benchmark_client ; ln -s {node} . ; ln -s {client} .'

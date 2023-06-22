@@ -65,6 +65,7 @@ pub struct Core {
     payloads: HashMap<ElectionId, BTreeSet<TxHash>>,
     votes: Vec<Vote>,
     header_size: usize,
+    decided: BTreeSet<ElectionId>,
 }
 
 impl Core {
@@ -106,6 +107,7 @@ impl Core {
                 payloads: HashMap::new(),
                 votes: Vec::new(),
                 header_size,
+                decided: BTreeSet::new(),
             }
             .run()
             .await;
@@ -139,9 +141,9 @@ impl Core {
                         let election = Election::new();
                         self.elections.insert(election_id.clone(), election);
 
-                        #[cfg(feature = "benchmark")]
+                        //#[cfg(feature = "benchmark")]
                         // NOTE: This log entry is used to compute performance.
-                        info!("Created {} -> {:?}", vote, election_id);
+                        //info!("Created {} -> {:?}", vote, election_id);
                             
                         let election = self.elections.get_mut(&election_id).unwrap();
                         // insert vote
@@ -186,9 +188,9 @@ impl Core {
                         let election = Election::new();
                         self.elections.insert(election_id.clone(), election);
 
-                        #[cfg(feature = "benchmark")]
+                        //#[cfg(feature = "benchmark")]
                         // NOTE: This log entry is used to compute performance.
-                        info!("Created {} -> {:?}", vote, election_id);
+                        //info!("Created {} -> {:?}", vote, election_id);
                             
                         let election = self.elections.get_mut(&election_id).unwrap();
                         // insert vote
@@ -205,10 +207,17 @@ impl Core {
                         if let Some(_) = election.find_quorum_of_commits() {
                             //#[cfg(not(feature = "benchmark"))]
                             //info!("Committed {}", vote);
-                                                    
-                            #[cfg(feature = "benchmark")]
-                            // NOTE: This log entry is used to compute performance.
-                            info!("Committed {} -> {:?}", vote, election_id);
+
+                            self.decided.insert(election_id.clone());
+
+                            if self.decided.len() >= 1000 {
+                                #[cfg(feature = "benchmark")]
+                                // NOTE: This log entry is used to compute performance.
+                                info!("Committed {} -> {:?}", self.decided.len(), election_id);
+
+                                self.decided = BTreeSet::new();
+                            }        
+                          
                             election.decided = true;
                         }
 
