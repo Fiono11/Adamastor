@@ -58,6 +58,8 @@ class Bench:
             'sudo apt-get update',
             'sudo apt-get -y upgrade',
             'sudo apt-get -y autoremove',
+            'sudo apt install tmux',
+            'sudo apt-get install git',
 
             # The following dependencies prevent the error: [error: linker `cc` not found].
             'sudo apt-get -y install build-essential',
