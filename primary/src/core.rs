@@ -13,9 +13,10 @@ use log::{debug, error, warn, info};
 use network::{CancelHandler, SimpleSender};
 
 
-use tokio::time::{sleep, Instant};
+use tokio::time::{sleep, Instant, Sleep};
 use std::collections::{HashMap, HashSet, BTreeSet};
 use std::net::SocketAddr;
+use std::pin::Pin;
 use std::sync::atomic::{AtomicU64};
 use std::sync::{Arc};
 use std::time::Duration;
@@ -151,7 +152,7 @@ impl Core {
     }
 
     #[async_recursion]
-    async fn process_header(&mut self, header: &Header) -> DagResult<()> {
+    async fn process_header(&mut self, header: &Header, timer: &mut Pin<&mut Sleep>) -> DagResult<()> {
 
         header.verify(&self.committee).unwrap();
 
@@ -213,6 +214,9 @@ impl Core {
                                 info!("Committed {} -> {:?}", self.decided.len(), election_id);
 
                                 self.decided = BTreeSet::new();
+
+                                let deadline = Instant::now() + Duration::from_millis(TIMER);
+                                timer.as_mut().reset(deadline);
                             }        
                           
                             election.decided = true;
@@ -317,7 +321,7 @@ impl Core {
                 // We receive here messages from other primaries.
                 Some(message) = self.rx_primaries.recv() => {
                     match message {
-                        PrimaryMessage::Header(header) => self.process_header(&header).await,
+                        PrimaryMessage::Header(header) => self.process_header(&header, &mut timer).await,
                         _ => panic!("Unexpected core message")
                     }
                 },
@@ -337,6 +341,14 @@ impl Core {
                         let _handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
                     }
 
+                    if self.decided.len() > 0 {
+                        #[cfg(feature = "benchmark")]
+                        // NOTE: This log entry is used to compute performance.
+                        info!("Committed {} -> {:?}", self.decided.len(), election_id);
+
+                        self.decided = BTreeSet::new();
+                    }
+
                     let deadline = Instant::now() + Duration::from_millis(TIMER);
                     timer.as_mut().reset(deadline);
                     
@@ -344,7 +356,7 @@ impl Core {
                 }
 
                 // We also receive here our new headers created by the `Proposer`.
-                Some(header) = self.rx_proposer.recv() => self.process_header(&header).await,
+                Some(header) = self.rx_proposer.recv() => self.process_header(&header, &mut timer).await,
             };
             match result {
                 Ok(()) => (),
