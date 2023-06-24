@@ -9,7 +9,7 @@ use bytes::Bytes;
 use config::Committee;
 
 use crypto::{Digest, PublicKey as PublicAddress, SignatureService};
-use log::{debug, error, warn, info};
+use log::{debug, warn, info};
 use network::{CancelHandler, SimpleSender};
 
 
@@ -209,7 +209,7 @@ impl Core {
                             self.decided.insert(election_id.clone());
 
                             if self.decided.len() >= 1000 {
-                                #[cfg(feature = "benchmark")]
+                                //#[cfg(feature = "benchmark")]
                                 // NOTE: This log entry is used to compute performance.
                                 info!("Committed {} -> {:?}", self.decided.len(), election_id);
 
@@ -342,7 +342,7 @@ impl Core {
                     }
 
                     if self.decided.len() > 0 {
-                        #[cfg(feature = "benchmark")]
+                        //#[cfg(feature = "benchmark")]
                         // NOTE: This log entry is used to compute performance.
                         info!("Committed {} -> {:?}", self.decided.len(), election_id);
 
