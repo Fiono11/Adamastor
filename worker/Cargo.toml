@@ -16,7 +16,6 @@ futures = "0.3.14"
 async-trait = "0.1.50"
 
 crypto = { path = "../crypto" }
-store = { path = "../store" }
 config = { path = "../config" }
 network = { path = "../network" }
 primary = { path = "../primary" }

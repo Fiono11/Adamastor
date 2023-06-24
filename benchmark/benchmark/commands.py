@@ -32,7 +32,7 @@ class CommandMaker:
         assert isinstance(parameters, str)
         assert isinstance(debug, bool)
         v = '-vvv' if debug else '-vv'
-        return (f'./node {v} run --keys {keys} --committee {committee} '
+        return (f'/home/fiono/DelegatedRingCT/target/release/node {v} run --keys {keys} --committee {committee} '
                 f'--store {store} --parameters {parameters} primary')
 
     @staticmethod
@@ -42,7 +42,7 @@ class CommandMaker:
         assert isinstance(parameters, str)
         assert isinstance(debug, bool)
         v = '-vvv' if debug else '-vv'
-        return (f'./node {v} run --keys {keys} --committee {committee} '
+        return (f'/home/fiono/DelegatedRingCT/target/release/node {v} run --keys {keys} --committee {committee} '
                 f'--store {store} --parameters {parameters} worker --id {id}')
 
     @staticmethod
@@ -53,7 +53,7 @@ class CommandMaker:
         assert isinstance(nodes, list)
         assert all(isinstance(x, str) for x in nodes)
         nodes = f'--nodes {" ".join(nodes)}' if nodes else ''
-        return f'./benchmark_client {address} --size {size} --rate {rate} {nodes} --id {id}'
+        return f'/home/fiono/DelegatedRingCT/target/release/benchmark_client {address} --size {size} --rate {rate} {nodes} --id {id}'
 
     @staticmethod
     def kill():

@@ -220,17 +220,17 @@ class LogParser:
         #print("commits: ", self.commits)
         latency = []
         keys = list(self.commits.keys())
-        counter = 1
+        counter = 0
         merged_dict = {k: v for d in self.sent_samples for k, v in d.items()}
-        #print(merged_dict)
+        #print(len(merged_dict))
         #print("self samples: ", self.sent_samples)
 
         for i in range(len(keys)):
             #print("counter: ", counter)
-            start = merged_dict[counter-1]
+            start = merged_dict[counter]
             end = self.commits[keys[i]][1]
             latency += [end-start]
-            counter += int(self.commits[keys[i]][0])
+            counter += int(self.commits[keys[i]][0])-1
 
         print("latency: ", mean(latency))
         return mean(latency) if latency else 0
@@ -292,25 +292,25 @@ class LogParser:
             raise ValueError("Expected a filename or StringIO. Got %s" % type(file))
 
     @classmethod
-    def process(cls, directory, faults):
+    def process(cls, directory, faults, correct):
         assert isinstance(directory, str)
 
         clients = []
         for filename in sorted(glob(join(directory, 'client-*-*'))):
             num = int(re.search(r'client-(\d+)-\d+.log', filename).group(1))
-            if num >= faults:
+            if num < correct:
                 with open(filename, 'r') as f:
                     clients += [f.read()]
         primaries = []
         for filename in sorted(glob(join(directory, 'primary-*.log'))):
             num = int(re.search(r'primary-(\d+).log', filename).group(1))
-            if num >= faults:
+            if num < correct:
                 with open(filename, 'r') as f:
                     primaries += [f.read()]
         workers = []
         for filename in sorted(glob(join(directory, 'worker-*-*'))):
             num = int(re.search(r'worker-(\d+)-\d+.log', filename).group(1))
-            if num >= faults:
+            if num < correct:
                 with open(filename, 'r') as f:
                     workers += [f.read()]
 

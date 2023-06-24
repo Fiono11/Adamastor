@@ -7,7 +7,6 @@ use ed25519_dalek::Sha512;
 
 use primary::WorkerPrimaryMessage;
 use std::convert::TryInto;
-use store::Store;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 /// Indicates a serialized `WorkerMessage::Batch` message.
@@ -20,8 +19,6 @@ impl Processor {
     pub fn spawn(
         // Our worker's id.
         _id: WorkerId,
-        // The persistent storage.
-        _store: Store,
         // Input channel to receive batches.
         mut rx_batch: Receiver<(SerializedBatchMessage, Digest)>,
         // Output channel to send out batches' digests.

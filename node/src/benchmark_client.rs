@@ -96,7 +96,7 @@ struct Client {
 
 impl Client {
     pub async fn send(&self) -> Result<()> {
-        if self.id >= (self.nodes.len() as u64 - 1) / 3 {
+        if self.id < (self.nodes.len() as u64) - (self.nodes.len() as u64 - 1) / 3 {
             const PRECISION: u64 = 20; // Sample precision.
             const BURST_DURATION: u64 = 1000 / PRECISION;
 
@@ -129,15 +129,15 @@ impl Client {
             let mut counter2 = 0;
             let mut r: u64 = thread_rng().gen();
             let mut r2: u32 = thread_rng().gen();
-            //let mut r: u64 = 0;
+            let mut r: u64 = 0;
             let mut forks = false;
             if r == 0 {
                 forks = true;
             }
             info!("Forks: {}", forks);
             let mut transport = Framed::new(stream, LengthDelimitedCodec::new());
-            let interval = interval(Duration::from_millis(BURST_DURATION));
-            tokio::pin!(interval);
+            //let interval = interval(Duration::from_millis(BURST_DURATION));
+            //tokio::pin!(interval);
 
             // NOTE: This log entry is used to compute performance.
             info!(
@@ -145,12 +145,14 @@ impl Client {
                 PRECISION * burst * (self.nodes.len() as u64)
             );
 
-            //'main: loop {
-            for _ in 0..PRECISION * (self.nodes.len() as u64) {
-                interval.as_mut().tick().await;
-                let now = Instant::now();
+            info!("RATE: {}", self.rate);
 
-                for x in 0..burst {
+            //'main: loop {
+            for _ in 0..self.rate {//PRECISION * (self.nodes.len() as u64) {
+                //interval.as_mut().tick().await;
+                //let now = Instant::now();
+
+                //for x in 0..burst {
                     //if x == counter % burst {
                         //r += 1;
                         //id.put_u8(0u8); // Sample txs start with 0.
@@ -167,13 +169,15 @@ impl Client {
                     //};
 
                     tx.id = id.to_vec();
-                    if self.id != 0 {
+                    //if self.id != 0 {
                         info!(
                             "Sending sample transaction {}",
-                            self.rate * (self.nodes.len() as u64) * (self.id - 1) + counter2
+                            self.rate * self.id + counter2
                         );
-                    }
-                    //info!("Sending transaction with id {:?} and digest {:?}", tx.id, tx.digest());
+
+                        info!("counter: {}", counter2);
+                    //}
+                    info!("Sending transaction with id {:?} and digest {:?}", tx.id, tx.digest());
                     let message = bincode::serialize(&tx.clone()).unwrap();
                     //if counter == 0 {
                     //info!("TX SIZE: {:?}", message.len());
@@ -188,11 +192,11 @@ impl Client {
                         //break 'main;
                     }
                     counter2 += 1;
-                }
-                if now.elapsed().as_millis() > BURST_DURATION as u128 {
+                //}
+                //if now.elapsed().as_millis() > BURST_DURATION as u128 {
                     // NOTE: This log entry is used to compute performance.
-                    warn!("Transaction rate too high for this client");
-                }
+                    //warn!("Transaction rate too high for this client");
+                //}
                 counter += 1;
             }
             info!("Sent {} txs", counter2);

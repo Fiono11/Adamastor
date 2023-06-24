@@ -8,7 +8,7 @@ class SettingsError(Exception):
 
 class Settings:
     def __init__(self, key_name, key_path, base_port, repo_name, repo_url,
-                 branch, hosts, ips):
+                 branch, hosts):
         inputs_str = [
             key_name, key_path, repo_name, repo_url, branch
         ]
@@ -32,7 +32,6 @@ class Settings:
         self.repo_url = repo_url
         self.branch = branch
         self.hosts = hosts
-        self.ips = ips
 
         #self.instance_type = instance_type
         #self.aws_regions = regions
@@ -51,7 +50,6 @@ class Settings:
                 data['repo']['url'],
                 data['repo']['branch'],
                 data['hosts'],
-                data['ips']
             )
         except (OSError, JSONDecodeError) as e:
             raise SettingsError(str(e))

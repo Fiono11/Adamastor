@@ -4,7 +4,6 @@ use crate::batch_maker::BatchMaker;
 use crate::primary_connector::PrimaryConnector;
 use crate::processor::Processor;
 
-use crate::synchronizer::Synchronizer;
 use async_trait::async_trait;
 use bytes::Bytes;
 use config::{Committee, Parameters, WorkerId};
@@ -16,7 +15,6 @@ use primary::{PrimaryWorkerMessage, Transaction};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::net::SocketAddr;
-use store::Store;
 use tokio::sync::mpsc::{channel, Sender};
 
 /// The default channel capacity for each channel of the worker.
@@ -45,8 +43,6 @@ pub struct Worker {
     committee: Committee,
     /// The configuration parameters.
     parameters: Parameters,
-    /// The persistent storage.
-    store: Store,
 }
 
 impl Worker {
@@ -55,7 +51,6 @@ impl Worker {
         id: WorkerId,
         committee: Committee,
         parameters: Parameters,
-        store: Store,
     ) {
         // Define a worker instance.
         let worker = Self {
@@ -63,7 +58,6 @@ impl Worker {
             id,
             committee,
             parameters,
-            store,
         };
 
         let primary_address = worker
@@ -116,19 +110,6 @@ impl Worker {
             address,
             /* handler */
             PrimaryReceiverHandler { tx_synchronizer },
-        );
-
-        // The `Synchronizer` is responsible to keep the worker in sync with the others. It handles the commands
-        // it receives from the primary (which are mainly notifications that we are out of sync).
-        Synchronizer::spawn(
-            self.name.clone(),
-            self.id,
-            self.committee.clone(),
-            self.store.clone(),
-            self.parameters.gc_depth,
-            self.parameters.sync_retry_delay,
-            self.parameters.sync_retry_nodes,
-            /* rx_message */ rx_synchronizer,
         );
 
         info!(
@@ -190,7 +171,6 @@ impl Worker {
         // that will send it to our primary machine.
         Processor::spawn(
             self.id,
-            self.store.clone(),
             /* rx_batch */ rx_processor,
             /* tx_digest */ tx_primary,
             /* own_batch */ true,

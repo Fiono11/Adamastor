@@ -5,7 +5,6 @@ members = [
     "network", 
     "node", 
     "primary", 
-    "store", 
     "worker",  
 ]
 

@@ -16,14 +16,14 @@ def local(ctx, debug=True):
         'faults': 0,
         'nodes': [4],
         'workers': 1,
-        'rate': 24000,
+        'rate': 12000,
         'tx_size': 532,
         'duration': 10,
         'runs': 1,
     }
     node_params = {
         'header_size': 1000,  # bytes
-        'max_header_delay': 1000,  # ms
+        'max_header_delay': 200,  # ms
         'gc_depth': 50,  # rounds
         'sync_retry_delay': 10_000,  # ms
         'sync_retry_nodes': 3,  # number of nodes
@@ -103,21 +103,21 @@ def remote(ctx, debug=False):
     ''' Run benchmarks on AWS '''
     bench_params = {
         'faults': 0,
-        'nodes': [7],
+        'nodes': [4],
         'workers': 1,
         'collocate': True,
-        'rate': [1000],
-        'tx_size': 1833,
-        'duration': 90,
+        'rate': [24000],
+        'tx_size': 532,
+        'duration': 15,
         'runs': 1,
     }
     node_params = {
-        'header_size': 3200,  # bytes
-        'max_header_delay': 1000,  # ms
+        'header_size': 1000,  # bytes
+        'max_header_delay': 200,  # ms
         'gc_depth': 50,  # rounds
         'sync_retry_delay': 10_000,  # ms
         'sync_retry_nodes': 3,  # number of nodes
-        'batch_size': 1000,  # bytes
+        'batch_size': 500,  # bytes
         'max_batch_delay': 1000  # ms
     }
     try:

@@ -94,11 +94,6 @@ class Ploter:
                 linestyle='dotted', marker=next(markers), capsize=3
             )
 
-            tx_sizes = [6, 12, 24, 48, 96]
-
-            for i, (x, y) in enumerate(zip(x_values, y_values)):
-                plt.annotate(tx_sizes[i], (x, y))
-
         plt.legend(loc='lower center', bbox_to_anchor=(0.5, 1), ncol=3)
         plt.xlim(xmin=0)
         plt.ylim(bottom=0)

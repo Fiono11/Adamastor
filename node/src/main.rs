@@ -7,7 +7,6 @@ use config::{Committee, KeyPair, Parameters, WorkerId};
 use env_logger::Env;
 
 use primary::Primary;
-use store::Store;
 use tokio::sync::mpsc::{channel, Receiver};
 use worker::Worker;
 
@@ -89,8 +88,6 @@ async fn run(matches: &ArgMatches<'_>) -> Result<()> {
         None => Parameters::default(),
     };
 
-    // Make the data store.
-    let store = Store::new(store_path).context("Failed to create a store")?;
 
     // Channels the sequence of certificates.
     let (_tx_output, rx_output) = channel(CHANNEL_CAPACITY);
@@ -106,7 +103,6 @@ async fn run(matches: &ArgMatches<'_>) -> Result<()> {
                 keypair.secret,
                 committee.clone(),
                 parameters.clone(),
-                store,
                 /* tx_consensus */ //tx_new_certificates,
                 /* rx_consensus */ //rx_feedback,
             );
@@ -119,7 +115,7 @@ async fn run(matches: &ArgMatches<'_>) -> Result<()> {
                 .unwrap()
                 .parse::<WorkerId>()
                 .context("The worker id must be a positive integer")?;
-            Worker::spawn(keypair.name, id, committee, parameters, store);
+            Worker::spawn(keypair.name, id, committee, parameters);
         }
         _ => unreachable!(),
     }

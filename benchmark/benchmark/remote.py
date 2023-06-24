@@ -55,31 +55,27 @@ class Bench:
     def install(self):
         Print.info('Installing rust and cloning the repo...')
         cmd = [
-            'sudo apt-get update',
-            'sudo apt-get -y upgrade',
-            'sudo apt-get -y autoremove',
-            'sudo apt install tmux',
-            'sudo apt-get install git',
+            #'sudo apt-get update',
+            #'sudo apt-get -y upgrade',
+            #'sudo apt-get -y autoremove',
 
             # The following dependencies prevent the error: [error: linker `cc` not found].
-            'sudo apt-get -y install build-essential',
-            'sudo apt-get -y install cmake',
+            #'sudo apt-get -y install build-essential',
+            #'sudo apt-get -y install cmake',
+            #'sudo apt-get install tmux',
+            #'sudo apt-get install git',
 
             # Install rust (non-interactive).
-            'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y',
-            'source $HOME/.cargo/env',
-            'rustup default nightly',
-
-            # This is missing from the Rocksdb installer (needed for Rocksdb).
-            'sudo apt-get install -y clang',
+            #'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y',
+            #'source $HOME/.cargo/env',
+            #'rustup default nightly',
 
             # Clone the repo.
-            f'(git clone {self.settings.repo_url} || (cd {self.settings.repo_name} ; git pull ; chmod a+w .)) &&'
-            f'(cd {self.settings.repo_name}/benchmark ; mkdir logs)'
+            f'(sudo apt-get -y install build-essential && sudo apt-get -y install cmake && sudo apt-get install tmux && sudo apt-get install git && curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source $HOME/.cargo/env && git clone {self.settings.repo_url} || (cd {self.settings.repo_name} ; git pull ; chmod a+w .)) && cd {self.settings.repo_name}/benchmark && mkdir logs)'
         ]
         hosts = self.manager.hosts()
         try:
-            g = Group(*hosts[13:], user='fiono', connect_kwargs=self.connect)
+            g = Group(*hosts[:4], user='fiono', connect_kwargs=self.connect)
             g.run(' && '.join(cmd), hide=True)
             Print.heading(f'Initialized testbed of {len(hosts)} nodes')
         except (GroupException, ExecutionError) as e:
@@ -116,19 +112,19 @@ class Bench:
             f'Updating {len(ips)} machines (branch "{self.settings.branch}")...'
         )
         cmd = [
-            f'(cd {self.settings.repo_name} && git fetch -f)',
-            #f'(cd {self.settings.repo_name} && git checkout -f -b {self.settings.branch})',
-            f'(cd {self.settings.repo_name} && git pull -f)',
-            'source $HOME/.cargo/env',
-            f'(cd {self.settings.repo_name} && {CommandMaker.compile()})',
-            CommandMaker.alias_binaries(
-                f'{self.settings.repo_name}/target/release/'
-            )
+            #f'(cd {self.settings.repo_name} && git fetch -f)',
+            #f'(cd {self.settings.repo_name} && git checkout -f {self.settings.branch})',
+            #f'(cd {self.settings.repo_name} && git pull -f)',
+            #'source $HOME/.cargo/env',
+            f'(cd {self.settings.repo_name} && git fetch -f && cd {self.settings.repo_name} && git checkout -f {self.settings.branch} && cd {self.settings.repo_name} && git pull -f && source $HOME/.cargo/env && cd {self.settings.repo_name} && {CommandMaker.compile()})'
+            #CommandMaker.alias_binaries(
+                #f'{self.settings.repo_name}/target/release/'
+            #)
         ]
         g = Group(*hosts, user='fiono', connect_kwargs=self.connect)
         g.run(' && '.join(cmd), hide=True)
 
-    def _config(self, hosts, ips, node_parameters, bench_parameters):
+    def _config(self, hosts, node_parameters, bench_parameters):
         Print.info('Generating configuration files...')
 
         # Cleanup all local configuration files.
@@ -140,7 +136,7 @@ class Bench:
         subprocess.run(cmd, check=True, cwd=PathMaker.node_crate_path())
 
         # Create alias for the client and nodes binary.
-        cmd = CommandMaker.alias_binaries(PathMaker.binary_path(), True)
+        cmd = CommandMaker.alias_binaries(PathMaker.binary_path())
         subprocess.run([cmd], shell=True)
 
         # Generate configuration files.
@@ -162,7 +158,7 @@ class Bench:
             addresses = OrderedDict(
                 (x, y) for x, y in zip(names, hosts)
             )
-        committee = Committee(addresses, self.settings.base_port)
+        committee = Committee(addresses, self.settings.base_port, (bench_parameters.nodes[0]-1)/3)
         committee.print(PathMaker.committee_file())
 
         node_parameters.print(PathMaker.parameters_file())
@@ -200,7 +196,8 @@ class Bench:
                     address,
                     bench_parameters.tx_size,
                     rate_share,
-                    [x for y in workers_addresses for _, x in y]
+                    [x for y in workers_addresses for _, x in y],
+                    i
                 )
                 log_file = PathMaker.client_log_file(i, id)
                 self._background_run(hosts[i], cmd, log_file)
@@ -241,7 +238,7 @@ class Bench:
             sleep(ceil(duration / 20))
         self.kill(hosts=hosts, delete_logs=False)
 
-    def _logs(self, committee, faults):
+    def _logs(self, committee, faults, correct):
         # Delete local logs (if any).
         cmd = CommandMaker.clean_logs()
         subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
@@ -276,7 +273,7 @@ class Bench:
 
         # Parse logs and return the parser.
         Print.info('Parsing logs and computing performance...')
-        return LogParser.process(PathMaker.logs_path(), faults=faults)
+        return LogParser.process(PathMaker.logs_path(), faults, correct)
 
     def run(self, bench_parameters_dict, node_parameters_dict, debug=False):
         assert isinstance(debug, bool)
@@ -294,18 +291,18 @@ class Bench:
             return
 
         # Update nodes.
-        '''try:
+        try:
             self._update(selected_hosts, bench_parameters.collocate)
         except (GroupException, ExecutionError) as e:
             e = FabricError(e) if isinstance(e, GroupException) else e
-            raise BenchError('Failed to update nodes', e)'''
+            raise BenchError('Failed to update nodes', e)
         
-        ips = self.manager.ips()
+        #ips = self.manager.ips()
 
         # Upload all configuration files.
         try:
             committee = self._config(
-                selected_hosts, ips, node_parameters, bench_parameters
+                selected_hosts, node_parameters, bench_parameters
             )
         except (subprocess.SubprocessError, GroupException) as e:
             e = FabricError(e) if isinstance(e, GroupException) else e
@@ -327,8 +324,9 @@ class Bench:
                             r, committee_copy, bench_parameters, debug
                         )
 
-                        faults = bench_parameters.faults
-                        logger = self._logs(committee_copy, faults)
+                        correct = bench_parameters.nodes[0] - (bench_parameters.nodes[0]-1)/3
+                        faults = (bench_parameters.nodes[0]-1)/3
+                        logger = self._logs(committee_copy, int(faults), int(correct))
                         logger.print(PathMaker.result_file(
                             faults,
                             n, 
