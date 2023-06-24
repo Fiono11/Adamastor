@@ -113,7 +113,7 @@ def remote(ctx, debug=False):
     }
     node_params = {
         'header_size': 1000,  # bytes
-        'max_header_delay': 200,  # ms
+        'max_header_delay': 1000,  # ms
         'gc_depth': 50,  # rounds
         'sync_retry_delay': 10_000,  # ms
         'sync_retry_nodes': 3,  # number of nodes
