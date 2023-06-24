@@ -158,6 +158,8 @@ impl Core {
     #[async_recursion]
     async fn process_header(&mut self, header: &Header) -> DagResult<()> {
 
+        header.verify(&self.committee).unwrap();
+
         if header.author == self.name {
             info!("Received own header with {} votes from {}", header.votes.len(), header.author);
 
