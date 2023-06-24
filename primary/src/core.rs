@@ -64,6 +64,7 @@ pub struct Core {
     votes: Vec<Vote>,
     header_size: usize,
     decided: BTreeSet<ElectionId>,
+    counter: u64,
 }
 
 impl Core {
@@ -104,6 +105,7 @@ impl Core {
                 votes: Vec::new(),
                 header_size,
                 decided: BTreeSet::new(),
+                counter: 0,
             }
             .run()
             .await;
@@ -211,7 +213,9 @@ impl Core {
                             if self.decided.len() >= 1000 {
                                 //#[cfg(feature = "benchmark")]
                                 // NOTE: This log entry is used to compute performance.
-                                info!("Committed {} -> {:?}", self.decided.len(), election_id);
+                                info!("Committed {} -> {:?}", self.decided.len(), self.counter);
+
+                                self.counter += 1;
 
                                 self.decided = BTreeSet::new();
 
@@ -345,7 +349,9 @@ impl Core {
                         //for election_id in &self.decided {
                              //#[cfg(feature = "benchmark")]
                             // NOTE: This log entry is used to compute performance.
-                            info!("Committed {} -> {:?}", self.decided.len(), self.decided.first().unwrap());
+                            info!("Committed {} -> {:?}", self.decided.len(), self.counter);
+
+                            self.counter += 1;
                         //}
                         self.decided = BTreeSet::new();
                     }
