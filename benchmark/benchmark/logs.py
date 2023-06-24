@@ -124,12 +124,12 @@ class LogParser:
         tmp = [(d, self._to_posix(t)) for t, d in tmp]
         proposals = self._merge_results([tmp])
 
-        tmp = findall(r'\[(.*Z) .* Committed (\d+) -> ([^ ]+=)', log)
-        print("tmp1: ", tmp)
+        tmp = findall(r'\[(.*Z) .* Committed (\d+) -> (\d+)', log)
+        #print("tmp1: ", tmp)
         tmp = [(a, (d, self._to_posix(t))) for t, d, a in tmp]
-        print("tmp2: ", tmp)
+        #print("tmp2: ", tmp)
         commits = self._merge_results([tmp])
-        print("commits: ", commits)
+        #print("commits: ", commits)
 
         configs = {
             'header_size': int(
@@ -220,7 +220,7 @@ class LogParser:
         #print("commits: ", self.commits)
         latency = []
         keys = list(self.commits.keys())
-        print("self commits: ", self.commits.keys())
+        #print("self commits: ", self.commits.keys())
         counter = 0
         merged_dict = {k: v for d in self.sent_samples for k, v in d.items()}
         #print(len(merged_dict))
