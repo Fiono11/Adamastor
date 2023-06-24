@@ -342,10 +342,11 @@ impl Core {
                     }
 
                     if self.decided.len() > 0 {
-                        //#[cfg(feature = "benchmark")]
-                        // NOTE: This log entry is used to compute performance.
-                        info!("Committed {} -> {:?}", self.decided.len(), election_id);
-
+                        for election_id in &self.decided {
+                             //#[cfg(feature = "benchmark")]
+                            // NOTE: This log entry is used to compute performance.
+                            info!("Committed {} -> {:?}", self.decided.len(), election_id);
+                        }
                         self.decided = BTreeSet::new();
                     }
 
