@@ -112,7 +112,7 @@ impl Core {
     #[async_recursion]
     async fn process_own_header(&mut self, header: &Header) -> DagResult<()> {
         assert!(header.author == self.name);
-        info!("Received own header with {} votes", header.votes.len());
+        //info!("Received own header with {} votes", header.votes.len());
             // broadcast vote
             let bytes = bincode::serialize(&PrimaryMessage::Header(header.clone()))
                 .expect("Failed to serialize our own header");
@@ -156,7 +156,7 @@ impl Core {
         header.verify(&self.committee).unwrap();
 
         if header.author == self.name {
-            info!("Received own header with {} votes from {}", header.votes.len(), header.author);
+            //info!("Received own header with {} votes from {}", header.votes.len(), header.author);
 
             // broadcast header
             let bytes = bincode::serialize(&PrimaryMessage::Header(header.clone()))
@@ -164,7 +164,7 @@ impl Core {
             let _handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
         }
         else {
-            info!("Received header with {} votes from {}", header.votes.len(), header.author);
+            //info!("Received header with {} votes from {}", header.votes.len(), header.author);
         }
   
         for vote in &header.votes {
@@ -323,14 +323,14 @@ impl Core {
                 },
 
                 () = &mut timer => {
-                    info!("Votes of {}: {}", self.name, self.votes.len());
+                    //info!("Votes of {}: {}", self.name, self.votes.len());
 
                     if self.votes.len() > 0 {
                         //for vote in &self.votes {
                             //info!("{} sending vote {:?}", self.name, vote);
                         //}
                         // broadcast votes
-                        info!("{} sending header with {} votes", self.name, self.votes.len());
+                        //info!("{} sending header with {} votes", self.name, self.votes.len());
                         let own_header = Header::new(self.name, self.votes.drain(..).collect(), &mut self.signature_service).await;
                         let bytes = bincode::serialize(&PrimaryMessage::Header(own_header.clone()))
                             .expect("Failed to serialize our own header");
