@@ -94,6 +94,8 @@ struct Client {
 
 impl Client {
     pub async fn send(&self) -> Result<()> {
+        let mut counter2 = 0;
+
         if self.id < (self.nodes.len() as u64) - (self.nodes.len() as u64 - 1) / 3 {
             const PRECISION: u64 = 20; // Sample precision.
             const BURST_DURATION: u64 = 1000 / PRECISION;
@@ -124,7 +126,6 @@ impl Client {
             let mut tx = Transaction::new();
             tx.data = data;
             let mut counter = 0;
-            let mut counter2 = 0;
             let mut r: u64 = thread_rng().gen();
             let mut r2: u32 = thread_rng().gen();
             //let mut r: u64 = 0;
