@@ -8,7 +8,6 @@ use env_logger::Env;
 use futures::future::join_all;
 use futures::sink::SinkExt as _;
 use log::{info, warn};
-use primary::Hash;
 use primary::Transaction;
 use rand::thread_rng;
 use rand::Rng;
