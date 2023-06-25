@@ -324,9 +324,10 @@ class Bench:
                             r, committee_copy, bench_parameters, debug
                         )
 
-                        correct = bench_parameters.nodes[0] - (bench_parameters.nodes[0]-1)/3
                         #faults = (bench_parameters.nodes[0]-1)/3
                         faults = 0
+                        correct = bench_parameters.nodes[0] - faults
+
                         logger = self._logs(committee_copy, int(faults), int(correct))
                         logger.print(PathMaker.result_file(
                             faults,
