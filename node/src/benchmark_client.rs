@@ -198,7 +198,7 @@ impl Client {
                 }
                 counter += 1;
             }
-            info!("Sent {} txs", counter2);
+            /*info!("Sent {} txs", counter2);
             if forks {
                 info!("Total bytes: {}", counter2 * 532);
             } else {
@@ -206,7 +206,7 @@ impl Client {
                     "Total bytes: {}",
                     counter2 * 532 * (self.nodes.len() - (self.nodes.len() - 1) / 3) as u64
                 );
-            }
+            }*/
         //}
         /*else {
             info!(
