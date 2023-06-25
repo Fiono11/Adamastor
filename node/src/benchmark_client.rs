@@ -213,6 +213,7 @@ impl Client {
                     "Sending sample transaction {}",
                     self.rate * self.id + counter2
                 );
+                counter2 += 1;
             }
         }
         Ok(())
