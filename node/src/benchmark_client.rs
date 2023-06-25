@@ -209,6 +209,14 @@ impl Client {
                 );
             }
         }
+        else {
+            for _ in 0..self.rate {
+                info!(
+                    "Sending sample transaction {}",
+                    self.rate * self.id + counter2
+                );
+            }
+        }
         Ok(())
     }
 
