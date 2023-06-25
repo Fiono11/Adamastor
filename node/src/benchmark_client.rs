@@ -96,7 +96,7 @@ struct Client {
 
 impl Client {
     pub async fn send(&self) -> Result<()> {
-        if self.id < (self.nodes.len() as u64) - (self.nodes.len() as u64 - 1) / 3 {
+        //if self.id < (self.nodes.len() as u64) - (self.nodes.len() as u64 - 1) / 3 {
             const PRECISION: u64 = 20; // Sample precision.
             const BURST_DURATION: u64 = 1000 / PRECISION;
 
@@ -208,7 +208,7 @@ impl Client {
                     counter2 * 532 * (self.nodes.len() - (self.nodes.len() - 1) / 3) as u64
                 );
             }
-        }
+        //}
         Ok(())
     }
 
