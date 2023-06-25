@@ -219,9 +219,10 @@ impl Core {
 
                                 self.decided = BTreeSet::new();
 
-                                let deadline = Instant::now() + Duration::from_millis(TIMER);
-                                timer.as_mut().reset(deadline);
-                            }        
+                            }     
+
+                            let deadline = Instant::now() + Duration::from_millis(TIMER);
+                            timer.as_mut().reset(deadline);   
                           
                             election.decided = true;
                         }
