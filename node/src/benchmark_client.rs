@@ -188,7 +188,7 @@ impl Client {
 
                     if let Err(e) = transport.send(bytes.clone()).await {
                         warn!("Failed to send transaction: {}", e);
-                        //break 'main;
+                        break 'main;
                     }
                     counter2 += 1;
                 }
