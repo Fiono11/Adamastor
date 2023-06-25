@@ -210,8 +210,7 @@ impl Client {
         }
         else {
             info!(
-                "Start sending {} transactions",
-                PRECISION * burst * (self.nodes.len() as u64)
+                "Start sending transactions",
             );
             for _ in 0..self.rate {
                 info!(
