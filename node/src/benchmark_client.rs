@@ -15,7 +15,7 @@ use rand::Rng;
 use std::convert::TryInto;
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
-use tokio::time::{interval, sleep, Duration, Instant};
+use tokio::time::{sleep, Duration};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 #[tokio::main]
