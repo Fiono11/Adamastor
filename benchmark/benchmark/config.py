@@ -42,7 +42,7 @@ class Committee:
         }
     '''
 
-    def __init__(self, addresses, base_port, byzantine):
+    def __init__(self, addresses, base_port):
         ''' The `addresses` field looks as follows:
             { 
                 "name": ["host", "host", ...],
@@ -79,13 +79,13 @@ class Committee:
                 }
                 port += 3
 
-            is_byzantine = i >= len(addresses) - byzantine
+            #is_byzantine = i >= len(addresses) - byzantine
 
             self.json['authorities'][name] = {
                 'stake': 1,
                 'primary': primary_addr,
                 'workers': workers_addr,
-                'byzantine': is_byzantine,
+                'byzantine': False,
             }
 
     def primary_addresses(self, faults=0):

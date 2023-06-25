@@ -238,7 +238,7 @@ class Bench:
             sleep(ceil(duration / 20))
         self.kill(hosts=hosts, delete_logs=False)
 
-    def _logs(self, committee, faults, correct):
+    def _logs(self, committee, faults):
         # Delete local logs (if any).
         cmd = CommandMaker.clean_logs()
         subprocess.run([cmd], shell=True, stderr=subprocess.DEVNULL)
@@ -325,10 +325,11 @@ class Bench:
                         )
 
                         #faults = (bench_parameters.nodes[0]-1)/3
-                        faults = 0
+                        #faults = 0
+                        faults = bench_parameters.faults
                         correct = bench_parameters.nodes[0] - faults
 
-                        logger = self._logs(committee_copy, int(faults), int(correct))
+                        logger = self._logs(committee_copy, faults)
                         logger.print(PathMaker.result_file(
                             faults,
                             n, 
