@@ -12,7 +12,6 @@ use primary::Hash;
 use primary::Transaction;
 use rand::thread_rng;
 use rand::Rng;
-use std::convert::TryInto;
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::time::{sleep, Duration};
