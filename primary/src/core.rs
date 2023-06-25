@@ -346,7 +346,7 @@ impl Core {
                         let _handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
                     }
 
-                    if self.decided.len() > 0 {
+                    /*if self.decided.len() > 0 {
                         //for election_id in &self.decided {
                              //#[cfg(feature = "benchmark")]
                             // NOTE: This log entry is used to compute performance.
@@ -355,7 +355,7 @@ impl Core {
                             self.counter += 1;
                         //}
                         self.decided = BTreeSet::new();
-                    }
+                    }*/
 
                     let deadline = Instant::now() + Duration::from_millis(TIMER);
                     timer.as_mut().reset(deadline);
