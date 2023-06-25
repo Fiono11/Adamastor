@@ -209,10 +209,14 @@ impl Client {
             }
         }
         else {
+            info!(
+                "Start sending {} transactions",
+                PRECISION * burst * (self.nodes.len() as u64)
+            );
             for _ in 0..self.rate {
                 info!(
                     "Sending sample transaction {}",
-                    self.rate * self.id + counter2
+                    counter2
                 );
                 counter2 += 1;
             }
