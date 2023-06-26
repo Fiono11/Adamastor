@@ -227,6 +227,9 @@ class LogParser:
         #print("self samples: ", self.sent_samples)
 
         for i in range(len(keys)):
+            if keys[i] not in self.commits:
+                print(f"Key {keys[i]} is not valid")
+                break
             #print("counter: ", counter)
             start = merged_dict[counter]
             end = self.commits[keys[i]][1]
