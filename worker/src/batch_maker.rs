@@ -11,7 +11,7 @@ use crypto::{Digest, PublicKey};
 use ed25519_dalek::{Digest as _, Sha512};
 #[cfg(feature = "benchmark")]
 use log::info;
-use network::ReliableSender;
+use network::{ReliableSender, SimpleSender};
 use primary::Transaction;
 #[cfg(feature = "benchmark")]
 use std::convert::TryInto as _;
@@ -39,7 +39,7 @@ pub struct BatchMaker {
     /// Holds the size of the current batch (in bytes).
     current_batch_size: usize,
     /// A network sender to broadcast the batches to the other workers.
-    network: ReliableSender,
+    network: SimpleSender,
     /// The primary network address.
     primary_address: SocketAddr,
     /// Channel to deliver batches for which we have enough acknowledgements.
@@ -65,7 +65,7 @@ impl BatchMaker {
                 workers_addresses,
                 current_batch: Batch::with_capacity(batch_size * 2),
                 current_batch_size: 0,
-                network: ReliableSender::new(),
+                network: SimpleSender::new(),
                 primary_address,
                 tx_batch,
             }

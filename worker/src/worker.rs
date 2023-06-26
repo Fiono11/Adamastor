@@ -285,14 +285,14 @@ struct WorkerReceiverHandler {
 impl MessageHandler for WorkerReceiverHandler {
     async fn dispatch(&self, writer: &mut Writer, serialized: Bytes) -> Result<(), Box<dyn Error>> {
         // Reply with an ACK.
-        let _ = writer.send(Bytes::from("Ack")).await;
+        //let _ = writer.send(Bytes::from("Ack")).await;
 
         // Deserialize and parse the message.
         match bincode::deserialize(&serialized) {
             Ok(WorkerMessage::Batch(block)) => {
-                /*info!("Received block: {:?}", block);
+                info!("Received block: {:?}", block);
 
-                self
+                /*self
                     .tx_processor
                     .send(serialized.to_vec())
                     .await
