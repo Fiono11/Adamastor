@@ -33,7 +33,7 @@ class LogParser:
         # Parse the clients logs.
         try:
             with Pool() as p:
-                results = p.map(self._parse_clients, clients)
+                results = p.map(self._parse_clients, enumerate(clients))
         except (ValueError, IndexError, AttributeError) as e:
             raise ParseError(f'Failed to parse clients\' logs: {e}')
         self.size, self.rate, self.start, misses, self.sent_samples \
@@ -97,7 +97,9 @@ class LogParser:
         return {sum_keys: min_value}
 
 
-    def _parse_clients(self, log):
+    def _parse_clients(self, client_log):
+        index, log = client_log
+
         if search(r'Error', log) is not None:
             raise ParseError('Client(s) panicked')
 
@@ -109,10 +111,11 @@ class LogParser:
 
         misses = len(findall(r'rate too high', log))
 
+        transaction_offset = index * size
         tmp = findall(r'\[(.*Z) .* sample transaction (\d+)', log)
-        #print("tmp: ", tmp)
-        samples = {int(s): self._to_posix(t) for t, s in tmp}
-        #print("samples: ", samples)
+        samples = {int(s) + transaction_offset: self._to_posix(t) for t, s in tmp}
+
+        print("samples: ", samples)
 
         return size, rate, start, misses, samples
 

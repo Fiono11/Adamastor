@@ -171,8 +171,8 @@ impl Client {
                     //if self.id != 0 {
                         info!(
                             "Sending sample transaction {}",
-                            //counter2
-                            self.rate * self.id + counter2
+                            counter2
+                            //self.rate * self.id + counter2
                         );
 
                         //info!("counter: {}", counter2);

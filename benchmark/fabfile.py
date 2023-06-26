@@ -108,7 +108,7 @@ def remote(ctx, debug=False):
         'collocate': True,
         'rate': [10000],
         'tx_size': 532,
-        'duration': 30,
+        'duration': 1,
         'runs': 1,
     }
     node_params = {
