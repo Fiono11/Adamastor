@@ -16,7 +16,9 @@ class ParseError(Exception):
 
 
 class LogParser:
-    def __init__(self, clients, primaries, workers, faults=0):
+    def __init__(self, clients, primaries, workers, faults, directory):
+        self.max_trans_id = -1
+
         inputs = [clients, primaries, workers]
         assert all(isinstance(x, list) for x in inputs)
         assert all(isinstance(x, str) for y in inputs for x in y)
@@ -30,10 +32,19 @@ class LogParser:
             self.committee_size = '?'
             self.workers = '?'
 
+        log_files = ['logs/client-0-0.log', 'logs/client-1-0.log', 'logs/client-2-0.log', "logs/client-3-0.log"]  # replace these with your actual log file paths
+        self.parse_logs(log_files)
+
+        clients = []
+        for filename in sorted(glob(join(directory, 'client-*-*'))):
+            #if num < correct:
+            with open(filename, 'r') as f:
+                clients += [f.read()]
+
         # Parse the clients logs.
         try:
             with Pool() as p:
-                results = p.map(self._parse_clients, enumerate(clients))
+                results = p.map(self._parse_clients, clients)
         except (ValueError, IndexError, AttributeError) as e:
             raise ParseError(f'Failed to parse clients\' logs: {e}')
         self.size, self.rate, self.start, misses, self.sent_samples \
@@ -95,11 +106,28 @@ class LogParser:
                 if min_value is None or v < min_value:
                     min_value = v
         return {sum_keys: min_value}
+    
+    def parse_logs(self, log_files):
+        for file in log_files:
+            # Read the file
+            with open(file, 'r') as f:
+                lines = f.readlines()
 
+            # Process the lines
+            for i in range(len(lines)):
+                match = re.search(r'Sending sample transaction (\d+)', lines[i])
+                if match:
+                    # Increment the global transaction ID
+                    self.max_trans_id += 1
+                    # Replace the line with the new transaction ID
+                    lines[i] = re.sub(r'Sending sample transaction \d+', f'Sending sample transaction {self.max_trans_id}', lines[i])
 
-    def _parse_clients(self, client_log):
-        index, log = client_log
+            # Write the new content back into the file
+            with open(file, 'w') as f:
+                f.writelines(lines)
 
+    def _parse_clients(self, log):
+        #print("log: ", log)
         if search(r'Error', log) is not None:
             raise ParseError('Client(s) panicked')
 
@@ -111,11 +139,10 @@ class LogParser:
 
         misses = len(findall(r'rate too high', log))
 
-        transaction_offset = index * size
         tmp = findall(r'\[(.*Z) .* sample transaction (\d+)', log)
-        samples = {int(s) + transaction_offset: self._to_posix(t) for t, s in tmp}
-
-        print("samples: ", samples)
+        #print("tmp: ", tmp)
+        samples = {int(s): self._to_posix(t) for t, s in tmp}
+        #print("samples: ", samples)
 
         return size, rate, start, misses, samples
 
@@ -228,13 +255,10 @@ class LogParser:
         #print("self commits: ", self.commits)
         counter = 0
         merged_dict = {k: v for d in self.sent_samples for k, v in d.items()}
-        #print(len(merged_dict))
+        #print("dict: ", merged_dict)
         #print("self samples: ", self.sent_samples)
 
         for i in range(len(keys)):
-            if counter not in merged_dict:
-                print(f"Counter {counter} is not a valid key in merged_dict")
-                break
             if keys[i] not in self.commits:
                 print(f"Key {keys[i]} is not valid")
                 break
@@ -329,4 +353,4 @@ class LogParser:
             with open(filename, 'r') as f:
                 workers += [f.read()]
 
-        return cls(clients, primaries, workers, faults=faults)
+        return cls(clients, primaries, workers, faults, directory)
