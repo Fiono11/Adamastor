@@ -202,6 +202,8 @@ class LogParser:
         if not self.commits:
             return 0, 0, 0
         start, end = min(self.start), max(val[1] for val in self.commits.values())
+        print("start: ", start)
+        print("end: ", end)
         duration = end - start
 
         sum_values = sum(int(val[0]) for val in self.commits.values())
@@ -220,7 +222,7 @@ class LogParser:
         #print("commits: ", self.commits)
         latency = []
         keys = list(self.commits.keys())
-        #print("self commits: ", self.commits.keys())
+        #print("self commits: ", self.commits)
         counter = 0
         merged_dict = {k: v for d in self.sent_samples for k, v in d.items()}
         #print(len(merged_dict))
@@ -233,10 +235,13 @@ class LogParser:
             #print("counter: ", counter)
             start = merged_dict[counter]
             end = self.commits[keys[i]][1]
+            print("sent: ", start)
+            print("commit: ", end)
             latency += [end-start]
+            print("latency: ", latency)
             counter += int(self.commits[keys[i]][0])-1
 
-        print("latency: ", mean(latency))
+        print("mean: ", mean(latency))
         return mean(latency) if latency else 0
 
     def result(self):
