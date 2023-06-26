@@ -1,4 +1,3 @@
-use crate::Hash;
 use crate::constants::{QUORUM, NUMBER_OF_NODES};
 use crate::election::{Election, ElectionId, Timer};
 // Copyright(C) Facebook, Inc. and its affiliates.
@@ -11,7 +10,7 @@ use config::Committee;
 
 use crypto::{Digest, PublicKey as PublicAddress, SignatureService};
 use log::{debug, warn, info};
-use network::{CancelHandler, SimpleSender, ReliableSender};
+use network::{CancelHandler, SimpleSender};
 
 
 use tokio::time::{sleep, Instant, Sleep};
@@ -55,7 +54,7 @@ pub struct Core {
     /// The last header we proposed (for which we are waiting votes).
     current_header: Header,
     /// A network sender to send the batches to the other workers.
-    network: ReliableSender,
+    network: SimpleSender,
     /// Keeps the cancel handlers of the messages we sent.
     cancel_handlers: HashMap<Round, Vec<CancelHandler>>,
     elections: HashMap<ElectionId, Election>,
@@ -97,7 +96,7 @@ impl Core {
                 last_voted: HashMap::with_capacity(2 * gc_depth as usize),
                 processing: HashMap::with_capacity(2 * gc_depth as usize),
                 current_header: Header::default(),
-                network: ReliableSender::new(),
+                network: SimpleSender::new(),
                 cancel_handlers: HashMap::with_capacity(2 * gc_depth as usize),
                 elections: HashMap::new(),
                 addresses,
@@ -120,15 +119,7 @@ impl Core {
             // broadcast vote
             let bytes = bincode::serialize(&PrimaryMessage::Header(header.clone()))
                 .expect("Failed to serialize our own header");
-            let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
-            let arr = header.digest().0;
-            self.cancel_handlers
-                .entry(u64::from_be_bytes([
-                    arr[0], arr[1], arr[2], arr[3],
-                    arr[4], arr[5], arr[6], arr[7],
-                ]))
-                .or_insert_with(Vec::new)
-                .extend(handlers);
+            let _handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
 
         for vote in &header.votes {
             if !vote.commit {
@@ -173,15 +164,7 @@ impl Core {
             // broadcast header
             let bytes = bincode::serialize(&PrimaryMessage::Header(header.clone()))
                 .expect("Failed to serialize our own header");
-            let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
-            let arr = header.digest().0;
-            self.cancel_handlers
-                .entry(u64::from_be_bytes([
-                    arr[0], arr[1], arr[2], arr[3],
-                    arr[4], arr[5], arr[6], arr[7],
-                ]))
-                .or_insert_with(Vec::new)
-                .extend(handlers);
+            let _handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
         }
         else {
             //info!("Received header with {} votes from {}", header.votes.len(), header.author);
@@ -327,15 +310,7 @@ impl Core {
             let own_header = Header::new(self.name, self.votes.drain(..).collect(), &mut self.signature_service).await;
             let bytes = bincode::serialize(&PrimaryMessage::Header(own_header.clone()))
                 .expect("Failed to serialize our own header");
-            let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
-            let arr = own_header.digest().0;
-            self.cancel_handlers
-                .entry(u64::from_be_bytes([
-                    arr[0], arr[1], arr[2], arr[3],
-                    arr[4], arr[5], arr[6], arr[7],
-                ]))
-                .or_insert_with(Vec::new)
-                .extend(handlers);
+            let _handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
         }
         
         Ok(())
@@ -368,15 +343,7 @@ impl Core {
                         let own_header = Header::new(self.name, self.votes.drain(..).collect(), &mut self.signature_service).await;
                         let bytes = bincode::serialize(&PrimaryMessage::Header(own_header.clone()))
                             .expect("Failed to serialize our own header");
-                        let handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
-                        let arr = own_header.digest().0;
-                        self.cancel_handlers
-                            .entry(u64::from_be_bytes([
-                                arr[0], arr[1], arr[2], arr[3],
-                                arr[4], arr[5], arr[6], arr[7],
-                            ]))
-                            .or_insert_with(Vec::new)
-                            .extend(handlers);
+                        let _handlers = self.network.broadcast(self.addresses.clone(), Bytes::from(bytes)).await;
                     }
 
                     /*if self.decided.len() > 0 {
