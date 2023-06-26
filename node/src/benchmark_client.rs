@@ -13,7 +13,7 @@ use rand::thread_rng;
 use rand::Rng;
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
-use tokio::time::{sleep, Duration};
+use tokio::time::{sleep, Duration, Instant, interval};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 #[tokio::main]
@@ -135,8 +135,8 @@ impl Client {
             }
             info!("Forks: {}", forks);
             let mut transport = Framed::new(stream, LengthDelimitedCodec::new());
-            //let interval = interval(Duration::from_millis(BURST_DURATION));
-            //tokio::pin!(interval);
+            let interval = interval(Duration::from_millis(BURST_DURATION));
+            tokio::pin!(interval);
 
             // NOTE: This log entry is used to compute performance.
             info!(
@@ -148,8 +148,8 @@ impl Client {
 
             'main: loop {
             //for _ in 0..self.rate {//PRECISION * (self.nodes.len() as u64) {
-                //interval.as_mut().tick().await;
-                //let now = Instant::now();
+                interval.as_mut().tick().await;
+                let now = Instant::now();
 
                 for x in 0..burst {
                     //if x == counter % burst {
