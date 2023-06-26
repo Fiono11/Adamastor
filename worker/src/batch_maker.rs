@@ -4,6 +4,7 @@ use crate::Block;
 use crate::quorum_waiter::QuorumWaiterMessage;
 use crate::worker::WorkerMessage;
 
+use bytes::Bytes;
 //#[cfg(feature = "benchmark")]
 use crypto::{Digest, PublicKey};
 #[cfg(feature = "benchmark")]
@@ -200,9 +201,9 @@ impl BatchMaker {
         }*/
 
         // Broadcast the batch through the network.
-        //let (names, addresses): (Vec<_>, _) = self.workers_addresses.iter().cloned().unzip();
-        //let bytes = Bytes::from(serialized.clone());
-        //let handlers = self.network.broadcast(addresses, bytes).await;
+        let (names, addresses): (Vec<_>, _) = self.workers_addresses.iter().cloned().unzip();
+        let bytes = Bytes::from(serialized.clone());
+        let handlers = self.network.broadcast(addresses, bytes).await;
 
         //info!("id: {:?}", array);
 
