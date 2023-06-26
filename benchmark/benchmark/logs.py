@@ -235,10 +235,10 @@ class LogParser:
             #print("counter: ", counter)
             start = merged_dict[counter]
             end = self.commits[keys[i]][1]
-            print("sent: ", start)
-            print("commit: ", end)
+            #print("sent: ", start)
+            #print("commit: ", end)
             latency += [end-start]
-            print("latency: ", latency)
+            #print("latency: ", latency)
             counter += int(self.commits[keys[i]][0])-1
 
         print("mean: ", mean(latency))
