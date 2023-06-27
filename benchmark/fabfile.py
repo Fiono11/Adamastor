@@ -106,7 +106,7 @@ def remote(ctx, debug=False):
         'nodes': [4],
         'workers': 1,
         'collocate': True,
-        'rate': [20000],
+        'rate': [1000],
         'tx_size': 532,
         'duration': 1,
         'runs': 1,
