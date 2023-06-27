@@ -30,7 +30,7 @@ class LogParser:
             self.committee_size = '?'
             self.workers = '?'
 
-        log_files = ['logs/client-0-0.log', 'logs/client-1-0.log', 'logs/client-2-0.log', "logs/client-3-0.log"]  # replace these with your actual log file paths
+        log_files = ['logs/client-0-0.log', 'logs/client-1-0.log', 'logs/client-2-0.log']  # replace these with your actual log file paths
         self.parse_logs(log_files)
 
         clients = []
