@@ -17,9 +17,6 @@ class ParseError(Exception):
 
 class LogParser:
     def __init__(self, clients, primaries, workers, faults, directory):
-        #self.max_trans_id = -1
-        #self.trans_id = 0
-
         inputs = [clients, primaries, workers]
         assert all(isinstance(x, list) for x in inputs)
         assert all(isinstance(x, str) for y in inputs for x in y)
@@ -138,7 +135,6 @@ class LogParser:
                 f.writelines(new_logs[idx])
 
     def _parse_clients(self, log):
-        #print("log: ", log)
         if search(r'Error', log) is not None:
             raise ParseError('Client(s) panicked')
 
@@ -165,7 +161,7 @@ class LogParser:
         tmp = [(d, self._to_posix(t)) for t, d in tmp]
         proposals = self._merge_results([tmp])
 
-        tmp = findall(r'\[(.*Z) .* Committed (\d+) -> (\d+)', log)
+        tmp = findall(r'\[(.*Z) .* Committed (\d+) -> ([^ ]+=)', log)
         #print("tmp1: ", tmp)
         tmp = [(a, (d, self._to_posix(t))) for t, d, a in tmp]
         #print("tmp2: ", tmp)
@@ -243,8 +239,6 @@ class LogParser:
         if not self.commits:
             return 0, 0, 0
         start, end = min(self.start), max(val[1] for val in self.commits.values())
-        print("start: ", start)
-        print("end: ", end)
         duration = end - start
 
         sum_values = sum(int(val[0]) for val in self.commits.values())
@@ -263,26 +257,19 @@ class LogParser:
         #print("commits: ", self.commits)
         latency = []
         keys = list(self.commits.keys())
-        #print("self commits: ", self.commits)
         counter = 0
         merged_dict = {k: v for d in self.sent_samples for k, v in d.items()}
-        #print("dict: ", merged_dict)
+        #print(len(merged_dict))
         #print("self samples: ", self.sent_samples)
 
         for i in range(len(keys)):
-            if keys[i] not in self.commits:
-                print(f"Key {keys[i]} is not valid")
-                break
             #print("counter: ", counter)
             start = merged_dict[counter]
             end = self.commits[keys[i]][1]
-            #print("sent: ", start)
-            #print("commit: ", end)
             latency += [end-start]
-            #print("latency: ", latency)
             counter += int(self.commits[keys[i]][0])-1
 
-        print("mean: ", mean(latency))
+        print("latency: ", mean(latency))
         return mean(latency) if latency else 0
 
     def result(self):
@@ -342,7 +329,7 @@ class LogParser:
             raise ValueError("Expected a filename or StringIO. Got %s" % type(file))
 
     @classmethod
-    def process(cls, directory, faults=0):
+    def process(cls, directory, faults):
         assert isinstance(directory, str)
 
         clients = []

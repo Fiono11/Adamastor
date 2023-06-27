@@ -208,7 +208,7 @@ impl Core {
                             //#[cfg(not(feature = "benchmark"))]
                             //info!("Committed {}", vote);
 
-                            self.decided.insert(election_id.clone());
+                            //self.decided.insert(election_id.clone());
 
                             /*if self.decided.len() >= 1000 {
                                 //#[cfg(feature = "benchmark")]
