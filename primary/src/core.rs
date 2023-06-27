@@ -208,9 +208,9 @@ impl Core {
                             //#[cfg(not(feature = "benchmark"))]
                             //info!("Committed {}", vote);
 
-                            //self.decided.insert(election_id.clone());
+                            self.decided.insert(election_id.clone());
 
-                            /*if self.decided.len() >= 1000 {
+                            if self.decided.len() >= 1000 {
                                 //#[cfg(feature = "benchmark")]
                                 // NOTE: This log entry is used to compute performance.
                                 info!("Committed {} -> {:?}", self.decided.len(), self.counter);
@@ -219,9 +219,7 @@ impl Core {
 
                                 self.decided = BTreeSet::new();
 
-                            }*/ 
-
-                            info!("Committed {} -> {:?}", 1, &election_id);    
+                            }     
 
                             let deadline = Instant::now() + Duration::from_millis(TIMER);
                             timer.as_mut().reset(deadline);   
