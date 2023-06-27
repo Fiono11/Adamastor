@@ -200,6 +200,7 @@ impl Core {
 
                 // decide vote
                 let election = self.elections.get_mut(&election_id).unwrap();
+                let mut decided = false;
                 if !election.decided {
                     if let Some(tally) = election.tallies.get(&vote.round) {
 
@@ -221,12 +222,11 @@ impl Core {
 
                             }     
 
-                            self.elections.remove(&election_id);
-
                             let deadline = Instant::now() + Duration::from_millis(TIMER);
                             timer.as_mut().reset(deadline);   
                           
                             election.decided = true;
+                            decided = true;
                         }
 
                             // reaches quorum of votes in this round
@@ -234,7 +234,7 @@ impl Core {
                                 if !election.voted_or_committed(&self.name, vote.round+1) {
                                     election.commit = Some(tx_hash.clone());
                                     election.proof_round = Some(vote.round);
-                                    let vote = Vote::new(vote.round + 1, tx_hash.clone(), election_id, true).await;
+                                    let vote = Vote::new(vote.round + 1, tx_hash.clone(), election_id.clone(), true).await;
                                     election.insert_vote(&vote, self.name);
 
                                     self.votes.push(vote);
@@ -251,7 +251,7 @@ impl Core {
                                         highest = commit.clone();
                                         committed = true;
                                     }
-                                let vote = Vote::new(vote.round+1, highest, election_id, committed).await;
+                                let vote = Vote::new(vote.round+1, highest, election_id.clone(), committed).await;
                                 self.votes.push(vote.clone());
                                 election.insert_vote(&vote, self.name);
                             }
@@ -265,12 +265,15 @@ impl Core {
                                 if let Some(commit) = &election.commit {
                                     tx_hash = commit.clone();
                                 }
-                                let vote = Vote::new(vote.round, tx_hash, election_id, vote.commit).await;
+                                let vote = Vote::new(vote.round, tx_hash, election_id.clone(), vote.commit).await;
                                 election.insert_vote(&vote, self.name);
                                 self.votes.push(vote);                         
                             }
                         //}               
                     }
+                }
+                if decided {
+                    self.elections.remove(&election_id);
                 }
                 //info!("Election of {:?}: {:?}", &election_id, self.elections.get(&election_id).unwrap());
             }
