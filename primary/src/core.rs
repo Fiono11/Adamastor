@@ -221,6 +221,8 @@ impl Core {
 
                             }     
 
+                            self.elections.remove(&election_id);
+
                             let deadline = Instant::now() + Duration::from_millis(TIMER);
                             timer.as_mut().reset(deadline);   
                           
