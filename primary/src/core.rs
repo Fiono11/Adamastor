@@ -270,9 +270,6 @@ impl Core {
                         //}               
                     }
                 }
-                else {
-                    self.elections.remove(&election_id);
-                }
                 //info!("Election of {:?}: {:?}", &election_id, self.elections.get(&election_id).unwrap());
             }
             else {
